@@ -14,16 +14,8 @@ To get started grab a blank project from https://start.spring.io and add the Rea
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-core</artifactId>
+			<version>2.5.0.BUILD-SNAPSHOT</version>
 		</dependency>
-```
-
-Also set the version explicitly in the dependency or as a property:
-
-```xml
-<properties>
-    ...    
-    <reactor.version>2.5.0.BUILD-SNAPSHOT</reactor.version>
-</properties>
 ```
 
 With Gradle it's very similar:
@@ -31,6 +23,8 @@ With Gradle it's very similar:
 ```java
     compile 'io.projectreactor:reactor-core:2.5.0.BUILD-SNAPSHOT'
 ```
+
+TODO: update reactor version to stable release
 
 Now let's write some code.
 
