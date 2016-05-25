@@ -1,8 +1,12 @@
-In this second article on Reactive Programming, we concentrate on explaining some concepts through actual code samples. The end result should be that you understand the power of the Reactive approach, but remember that with power comes responsibility. It's radical, and it's fundamental. It's "rip it up and start again" territory. So you will also hopefully appreciate that Reactive isn't a solution to all problems. In fact it isn't a solution to any problem, it merely facilitates the solution of a certain class of problems. The benefits you get from using it might be outweighed by the costs of learning it and maintaining the code afterwards, so tread carefully.
+:github: https://github.com/dsyer/reactive-notes
+:master: {github}/blob/master
+:parti: {master}/intro.adoc
+
+In this article we continue the series on {parti}[Reactive Programming], we concentrate on explaining some concepts through actual code samples. The end result should be that you understand the power of the Reactive approach, but remember that with power comes responsibility. It's radical, and it's fundamental. It's "rip it up and start again" territory. So you will also hopefully appreciate that Reactive isn't a solution to all problems. In fact it isn't a solution to any problem, it merely facilitates the solution of a certain class of problems. The benefits you get from using it might be outweighed by the costs of learning it and maintaining the code afterwards, so tread carefully.
 
 == Setting Up a Project
 
-We will use the Reactor libraries and a bit of Spring 5.0 to illustrate the points we need to make. The code could just as easily be written with other tools. If you want to play with the code and see it working without having to copy-paste anything, there are working samples with tests in https://github.com/dsyer/reactive-notes[Github].
+We will use the Reactor libraries and a bit of Spring 5.0 to illustrate the points we need to make. The code could just as easily be written with other tools. If you want to play with the code and see it working without having to copy-paste anything, there are working samples with tests in {github}[Github].
 
 To get started grab a blank project from https://start.spring.io and add the Reactor Core dependency. With Maven 
 
@@ -227,6 +231,5 @@ These methods are only there as an escape hatch to bridge from Reactive to block
 
 == Conclusion
 
-TODO: re-write this:
+In this article we have covered the basics of the Reactive Streams and Reactor APIs. If you need to know more there are plenty of places to look, but there's no substitute for hands on coding, so use the code in {github}[GitHub] or head over to the https://github.com/reactor/lite-rx-api-hands-on[Lite RX Hands On] workshop if you need a place to start. So far, really this is just overhead, and we haven't learned much that we couldn't have done in a more obvious way using non-Reactive tools. The next article in the series will dig a little deeper into the blocking, dispatching and asynchronous sides of the Reactive model, and show you what opportunities there are to reap the real benefits of the whole approach.
 
-Do you need to know all this stuff? Possibly not. You can be the bottleneck, if you are confident that you are no worse than your downstream dependencies. You might as well stick with plain old imperative programming and synchronous request-response. Use a few background threads to grease your way a bit. The result is easier to understand and easier to operationalize.

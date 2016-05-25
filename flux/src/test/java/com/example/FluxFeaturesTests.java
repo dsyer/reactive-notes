@@ -72,5 +72,4 @@ public class FluxFeaturesTests {
         // Logs the subscription, requests 2 at a time, all elements and finally completion.
     }
 
-
 }

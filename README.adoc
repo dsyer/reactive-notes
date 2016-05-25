@@ -10,6 +10,8 @@ include::flux.adoc[leveloffset=+1]
 
 == Don't Be the Bottleneck
 
+Do you need to know all this stuff? Possibly not. You can be the bottleneck, if you are confident that you are no worse than your downstream dependencies. You might as well stick with plain old imperative programming and synchronous request-response. Use a few background threads to grease your way a bit. The result is easier to understand and easier to operationalize.
+
 == Links
 
 http://blog.paralleluniverse.co/2014/02/20/reactive/[Parallel universe blog on Reactive]
