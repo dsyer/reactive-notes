@@ -48,7 +48,7 @@ A `Flux` is a publisher of a stream of events of a specific POJO type, so it is 
 Flux<String> flux = Flux.just("red", "white", "blue");
 ```
 
-We just generated a `Flux`, and now we can do stuff with it. There are actually only two things you can do with it: operate on it (transform it, or combine it with other streams) or subscribe to it (it's a publisher).
+We just generated a `Flux`, and now we can do stuff with it. There are actually only three things you can do with it: operate on it (transform it, or combine it with other streams), subscribe to it (it's a publisher), or configure it (modify the behaviour of subscribers).
 
 === Single Valued Streams
 
@@ -86,7 +86,7 @@ The observation we made about `Flux` applies here: no data is processed, it's ju
 
 TIP: There is a useful blog by Sebastien Deleuze on https://spring.io/blog/2016/04/19/understanding-reactive-types[Reactive Types], where he describes the differences between the various streaming and reactive APIs by looking at the types they define, and how you would use them. The differences between `Flux` and `Stream` are highlighted there in more detail.
 
-=== Subscribing
+=== Subscribers
 
 To make the data flow you have to subscribe to the `Flux` using one of the `subscribe()` methods. Only those methods make the data flow. They reach back through the chain of operators you declared on your stream (if any) and request the publisher to start creating data. In the sample samples we have been working with, this means the underlying collection of strings is iterated. In more complicated use case it might trigger a file to be read from the filesystem, or a pull from a database or a call to an HTTP service.
 
@@ -110,9 +110,9 @@ The output is:
 09:17:59.667 [main] INFO reactor.core.publisher.FluxLog -  onComplete()
 ```
 
-So we can see from this that the effect of `subscribe()` without an argument, is to request the publisher to send _all_ data -- there's only one `request()` logged and it's "unbounded". We can also see callbacks for each item that is published (`onNext`), for the end of the stream (`onComplete`), and for the original subscription (`onSubscribe`). If you needed to you could listen for those events yourself using the `doOn*` methods in `Flux` (which are themselves operators, not subscribers, so they don't cause any data to flow on their own).
+So we can see from this that the effect of `subscribe()` without an argument, is to request the publisher to send _all_ data -- there's only one `request()` logged and it's "unbounded". We can also see callbacks for each item that is published (`onNext`), for the end of the stream (`onComplete`), and for the original subscription (`onSubscribe`). If you needed to you could listen for those events yourself using the `doOn*()` methods in `Flux` (which are themselves operators, not subscribers, so they don't cause any data to flow on their own).
 
-The other way to subscribe is with a call to `subscribe(...)` with callbacks as arguments. There is a convenient form that gives you a callback with all the items, and also optionally with an error if there is one, and when the stream is complete. For example, just with the per-item callback:
+The `subscribe()` method is overloaded, and the other variants give you different options to control what happens. One important and convenient form is to `subscribe(...)` with callbacks as arguments. The first argument is a `Consumer`, which gives you a callback with each of the items, and you can also optionally consume an error if there is one, and execute a vanilla `Runnable` when the stream is complete. For example, just with the per-item callback:
 
 ```java
 Flux.just("red", "white", "blue");
@@ -194,7 +194,9 @@ This `Subscriber` is "batching" items 2 at a time. It's a common use case so you
 09:47:13.565 [main] INFO reactor.core.publisher.FluxLog -  onComplete()
 ```
 
-In fact this is such a common use case that there are convenience methods already available in `Flux`:
+=== Configurers
+
+In fact the batching subscriber is such a common use case that there are convenience methods already available in `Flux`. They fall into the category of "configurers", operating on the `Flux` itself and not on the data. Generally a configurer modifies the behaviour of subscribers before they are added. The batching example above can be implemented like this:
 
 ```java
 Flux.just("red", "white", "blue");
@@ -215,17 +217,96 @@ Flux.just("red", "white", "blue");
 10:25:43.741 [main] INFO reactor.core.publisher.FluxLog -  onNext(blue)
 10:25:43.741 [main] INFO reactor.core.publisher.FluxLog -  onComplete()
 ```
+TIP: A library that will process streams for you, like Spring Reactive Web, can handle the configuration concerns, as well as the subscriptions. It's good to be able to push these concerns down the stack because it saves you from cluttering your code with non-business logic, making it more readable and easier to test and maintain. So as a rule, it is good if you can **avoid calling configurers**, or at least push that code into a processing layer, and out of the business logic.
+
 === Threads, Dispatchers and Background Processing
 
 An interesting feature of all the logs above is that they are all on the "main" thread, which is the thread of the caller to `subscribe()`. This highlights an important point: Reactor is extremely frugal with threads, because that gives you the greatest chance of the best possible performance. That might be a surprising statement if you've been wrangling threads and thread pools and asynchronous executions for the last 5 years, trying to squeeze more juice out of your services. But it's true: in the absence of any imperative to switch threads, even if the JVM is optimized to handle threads very efficiently, it is always faster to do computation on a single thread. Reactor has handed you the keys to control all the asynchronous processing, and it assumes you know what you are doing.
 
-TODO: more stuff here
+`Flux` provides a few configurer methods that control the thread boundaries inside the eventual subscriber. For example, you can configure the subscriptions to be handled in a background thread using `Flux.subscribeOn()`:
+
+```java
+Flux.just("red", "white", "blue");
+  .log()
+  .map(String::toUpperCase)
+  .subscribeOn(Executors.parallel())
+.useCapacity(2)
+.subscribe()
+```
+
+the result can be seen in the output:
+
+```
+13:43:41.279 [parallel-1-1] INFO reactor.core.publisher.FluxLog -  onSubscribe(reactor.core.publisher.FluxArray$ArraySubscription@58663fc3)
+13:43:41.280 [parallel-1-1] INFO reactor.core.publisher.FluxLog -  request(2)
+13:43:41.281 [parallel-1-1] INFO reactor.core.publisher.FluxLog -  onNext(red)
+13:43:41.281 [parallel-1-1] INFO reactor.core.publisher.FluxLog -  onNext(white)
+13:43:41.281 [parallel-1-1] INFO reactor.core.publisher.FluxLog -  request(2)
+13:43:41.281 [parallel-1-1] INFO reactor.core.publisher.FluxLog -  onNext(blue)
+13:43:41.281 [parallel-1-1] INFO reactor.core.publisher.FluxLog -  onComplete()
+```
+
+TIP: if you write this code yourself, or copy-paste it, remember to wait for the processing to stop before the JVM exits.
+
+Note that the subscription, and all the processing, takes place on a background thread "parallel-1-1" -- this is the result of using `Executors.parallel()`, which is designed for dispatching CPU-intensive work (you don't care if it blocks because it all has to get done and it will only cost more to fan it out). We also want to be able to handle the opposite scenario, where the processing is I/O intensive and possibly blocking. In this case, you are adapting an underlying blocking API, and you just want to get it done as quickly as possible without blocking the caller. A thread pool is still your friend, and that's what you get from `Executors.concurrent()`. It's not appropriate for a fast consumer like our string transformation, but lets just look at what happens to the output when we switch executors:
+
+```java
+Flux.just("red", "white", "blue");
+  .log()
+  .map(String::toUpperCase)
+  .subscribeOn(Executors.concurrent())
+.useCapacity(2)
+.subscribe()
+```
+
+```
+13:52:24.017 [concurrent-2] INFO reactor.core.publisher.FluxLog -  onSubscribe(reactor.core.publisher.FluxArray$ArraySubscription@663d9dce)
+13:52:24.019 [concurrent-2] INFO reactor.core.publisher.FluxLog -  request(2)
+13:52:24.019 [concurrent-2] INFO reactor.core.publisher.FluxLog -  onNext(red)
+13:52:24.020 [concurrent-2] INFO reactor.core.publisher.FluxLog -  onNext(white)
+13:52:24.020 [concurrent-3] INFO reactor.core.publisher.FluxLog -  request(2)
+13:52:24.020 [concurrent-3] INFO reactor.core.publisher.FluxLog -  onNext(blue)
+13:52:24.020 [concurrent-3] INFO reactor.core.publisher.FluxLog -  onComplete()
+```
+
+Notice that there are now 2 threads processing the items, one for each "chunk" of data, separated by the "capacity" configuration. You might need to run this code a few times to get the same result because it's backed by a thread pool and the worker is selected essentially at random, so sometimes the same thread processes all the items.
+
+TODO: Replace `Computations` with `Executors`.
+
+`Flux` also has a `publishOn()` method which is the same, but for the listeners (`onNext()`, `onError()`, `onSubscribe()`) instead of for the subscriber itself:
+
+```java
+Flux.just("red", "white", "blue");
+  .log()
+  .map(String::toUpperCase)
+  .publishOn(Executors.concurrent())
+.useCapacity(2)
+.subscribe(value -> {
+    log.info("Consumed: " + value);
+});
+```
+
+The output looks like this:
+
+```
+14:01:12.624 [main] INFO reactor.core.publisher.FluxLog -  onSubscribe(reactor.core.publisher.FluxArray$ArraySubscription@3dd4520b)
+14:01:12.629 [main] INFO reactor.core.publisher.FluxLog -  request(256)
+14:01:12.629 [main] INFO reactor.core.publisher.FluxLog -  onNext(red)
+14:01:12.629 [main] INFO reactor.core.publisher.FluxLog -  onNext(white)
+14:01:12.629 [main] INFO reactor.core.publisher.FluxLog -  onNext(blue)
+14:01:12.629 [main] INFO reactor.core.publisher.FluxLog -  onComplete()
+14:01:12.630 [parallel-1-1] INFO com.example.FluxFeaturesTests - Consumed: RED
+14:01:12.630 [parallel-1-1] INFO com.example.FluxFeaturesTests - Consumed: WHITE
+14:01:12.630 [parallel-1-1] INFO com.example.FluxFeaturesTests - Consumed: BLUE
+```
+
+TODO: get the capacity hint heeded again
 
 === Converters: The Subscribers from Dark Side
 
-There is another way to subscribe to a stream, which is to call a converter method. `Flux` has `toList()` and `toMap()` and `Mono` has `get()`.
+There is another way to subscribe to a stream, which is to call a converter method. `Flux` has `toStream()`, `toList()` and `toMap()` and `Mono` has `get()` and `toFuture()`.
 
-WARNING: A good rule of thumb is "**never call get**" on `Mono` (or the equivalent converter methods on `Flux`).
+WARNING: A good rule of thumb is "**never call a converter**" (i.e. `get()` or the `to*()` methods on `Mono` and `Flux`).
 
 These methods are only there as an escape hatch to bridge from Reactive to blocking, if you need to adapt to a legacy API, for instance. When you call `Mono.get()` you throw away all the benefits of the Reactive Streams. This is the key difference between Reactive Streams and Java 8 `Streams` -- the native Java `Stream` only has the "all or nothing" subscription model, the equivalent of `Mono.get()`.
 
