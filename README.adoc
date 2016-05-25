@@ -1,6 +1,14 @@
 = Notes on Reactive Programming
 
-include::intro.adoc[]
+include::intro.adoc[leveloffset=+1]
+
+== Reactive Programming in Java
+
+include::flux.adoc[leveloffset=+1]
+
+== The Role of Back Pressure
+
+== Don't Be the Bottleneck
 
 == Links
 
@@ -25,3 +33,6 @@ https://github.com/kentuckyfriedtakahe/sodium[Sodium - GitHub]
 
 http://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html[Fork-join docs at Oracle]
 
+Sebastien Deleuze's https://spring.io/blog/2016/04/19/understanding-reactive-types[Reactive Types] Blog
+
+https://lmax-exchange.github.io/disruptor/[LMAX Disruptor]
