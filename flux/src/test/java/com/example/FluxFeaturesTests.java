@@ -102,11 +102,12 @@ public class FluxFeaturesTests {
 
     @Test
     public void publish() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase())
+        this.flux.log().map(value -> value.toUpperCase()).subscribeOn(Computations.concurrent())
                 .publishOn(Computations.parallel(), 2).subscribe(value -> {
                     log.info("Consumed: " + value);
                 });
         // Logs the consumed messages in a separate thread.
+        Thread.sleep(500L);
     }
 
 }

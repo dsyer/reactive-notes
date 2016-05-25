@@ -8,6 +8,27 @@ include::flux.adoc[leveloffset=+1]
 
 == The Role of Back Pressure
 
+* `subscribeOn()` allows a `Flux` to relay a slow publisher
+
+* `publishOn()` allows a `Flux` to have slow subscribers
+
+TODO: tidy this up...
+
+since callback is called for each subscriber you can use operators that share a context
+
+
+ ```
+Mono.defer( () -> {
+  AtomicInteger d = new AtomicNumber();     
+  return Mono.just(1)
+             .map(d::incrementAndGet)
+             .doOnError(d::decrementAndGet);
+})
+```
+
+`d` here is scoped for a given `Subscriber` that can be useful
+
+
 == Don't Be the Bottleneck
 
 Do you need to know all this stuff? Possibly not. You can be the bottleneck, if you are confident that you are no worse than your downstream dependencies. You might as well stick with plain old imperative programming and synchronous request-response. Use a few background threads to grease your way a bit. The result is easier to understand and easier to operationalize.
