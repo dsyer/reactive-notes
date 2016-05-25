@@ -106,7 +106,7 @@ The output is:
 
 So we can see from this that the effect of `subscribe()` without an argument, is to request the publisher to send _all_ data -- there's only one `request()` logged and it's "unbounded". We can also see callbacks for each item that is published (`onNext`), for the end of the stream (`onComplete`), and for the original subscription (`onSubscribe`). If you needed to you could listen for those events yourself using the `doOn*()` methods in `Flux` (which are themselves operators, not subscribers, so they don't cause any data to flow on their own).
 
-The `subscribe()` method is overloaded, and the other variants give you different options to control what happens. One important and convenient form is to `subscribe(...)` with callbacks as arguments. The first argument is a `Consumer`, which gives you a callback with each of the items, and you can also optionally consume an error if there is one, and execute a vanilla `Runnable` when the stream is complete. For example, just with the per-item callback:
+The `subscribe()` method is overloaded, and the other variants give you different options to control what happens. One important and convenient form is `subscribe()` with callbacks as arguments. The first argument is a `Consumer`, which gives you a callback with each of the items, and you can also optionally add a `Consumer` for an error if there is one, and a vanilla `Runnable` to execute when the stream is complete. For example, just with the per-item callback:
 
 ```java
 Flux.just("red", "white", "blue");
@@ -211,6 +211,7 @@ Flux.just("red", "white", "blue");
 10:25:43.741 [main] INFO reactor.core.publisher.FluxLog -  onNext(blue)
 10:25:43.741 [main] INFO reactor.core.publisher.FluxLog -  onComplete()
 ```
+
 TIP: A library that will process streams for you, like Spring Reactive Web, can handle the configuration concerns, as well as the subscriptions. It's good to be able to push these concerns down the stack because it saves you from cluttering your code with non-business logic, making it more readable and easier to test and maintain. So as a rule, it is good if you can **avoid calling configurers**, or at least push that code into a processing layer, and out of the business logic.
 
 === Threads, Dispatchers and Background Processing
@@ -295,11 +296,11 @@ The output looks like this:
 14:29:00.416 [parallel-1-1] INFO com.example.FluxFeaturesTests - Consumed: BLUE
 ```
 
-Notice that the consumer callbacks (logging "Consumed: ...") are on the pubilisher thread `parallel-1-1`. If you take out the `subscribeOn()` call, you might see all of the 2nd chunk of data processed on the `parallel-1-1` thread as well. This, again, is Reactor being frugal with threads -- if there's no explicit request to switch threads it stays on the same one for the next call, whatever that is.
+Notice that the consumer callbacks (logging "Consumed: ...") are on the publisher thread `parallel-1-1`. If you take out the `subscribeOn()` call, you might see all of the 2nd chunk of data processed on the `parallel-1-1` thread as well. This, again, is Reactor being frugal with threads -- if there's no explicit request to switch threads it stays on the same one for the next call, whatever that is.
 
 === Converters: The Subscribers from Dark Side
 
-There is another way to subscribe to a stream, which is to call a converter method. `Flux` has `toStream()`, `toList()` and `toMap()` and `Mono` has `get()` and `toFuture()`.
+There is another way to subscribe to a stream, which is to call a converter method. `Flux` has `toStream()`, `toList()` and `toMap()`, and `Mono` has `get()` and `toFuture()`.
 
 WARNING: A good rule of thumb is "**never call a converter**" (i.e. `get()` or the `to*()` methods on `Mono` and `Flux`).
 
