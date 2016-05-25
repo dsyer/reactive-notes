@@ -38,13 +38,13 @@ Reactor is the library we are going to use in samples, so we'll stick to the not
 
 === Generators
 
-A `Flux` is a publisher of a stream of events of a specific POJO type, so it is generic, i.e. `Flux<T>` is a publisher of `T`. `Flux` has some static convenience methods to create instances of itself from a variety of sources. For example, to create a `Flux` from a collection (or iterable):
+A `Flux` is a publisher of a stream of events of a specific POJO type, so it is generic, i.e. `Flux<T>` is a publisher of `T`. `Flux` has some static convenience methods to create instances of itself from a variety of sources. For example, to create a `Flux` from an array:
 
 ```java
 Flux<String> flux = Flux.just("red", "white", "blue");
 ```
 
-We just generated a `Flux`, and now we can do stuff with it. There are actually only two things you can do with it: operate on it (transform it, or combine it with other streams) or subscribe to it (as it's a publisher).
+We just generated a `Flux`, and now we can do stuff with it. There are actually only two things you can do with it: operate on it (transform it, or combine it with other streams) or subscribe to it (it's a publisher).
 
 === Single Valued Streams
 
