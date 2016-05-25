@@ -32,7 +32,7 @@ Now let's write some code.
 
 == What Makes it Functional?
 
-The basic building block of Reactive is a stream of events, and two protagonists, a publisher and a subscriber to those events. It's OK to call it a "stream" because that's what it is. If we need to, we will use the word "stream" with a small "s", but Java 8 has a `java.util.Stream` which is different, so try not to get confused. We wil try to concentrate the narrative on the publisher and subscriber anyway (that's what Reactive Streams does).
+The basic building block of Reactive is a stream of events, and two protagonists, a publisher and a subscriber to those events. It's OK to call it a "stream" because that's what it is. If we need to, we will use the word "stream" with a small "s", but Java 8 has a `java.util.Stream` which is different, so try not to get confused. We will try to concentrate the narrative on the publisher and subscriber anyway (that's what Reactive Streams does).
 
 Reactor is the library we are going to use in samples, so we'll stick to the notation there, and call the publisher a `Flux` (it implements the interface `Publisher` from Reactive Streams). The RxJava library is very similar and has a lot of parallel features, so in that case we would be talking about an `Observable` instead, but the code would be very similar. (Reactor 2.0 called it a `Stream` which is confusing if we need to talk about Java 8 `Streams` as well, so we'll only use the new code in Reactor 2.5.)
 
