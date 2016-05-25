@@ -212,7 +212,7 @@ Flux.just("red", "white", "blue");
 10:25:43.741 [main] INFO reactor.core.publisher.FluxLog -  onComplete()
 ```
 
-TIP: A library that will process streams for you, like Spring Reactive Web, can handle the configuration concerns, as well as the subscriptions. It's good to be able to push these concerns down the stack because it saves you from cluttering your code with non-business logic, making it more readable and easier to test and maintain. So as a rule, it is good if you can **avoid calling configurers**, or at least push that code into a processing layer, and out of the business logic.
+TIP: A library that will process streams for you, like Spring Reactive Web, can handle the configuration concerns, as well as the subscriptions. It's good to be able to push these concerns down the stack because it saves you from cluttering your code with non-business logic, making it more readable and easier to test and maintain. So as a rule, it is a good thing if you can **avoid calling configurers**, or at least push that code into a processing layer, and out of the business logic.
 
 === Threads, Dispatchers and Background Processing
 
