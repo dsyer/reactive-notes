@@ -1,5 +1,9 @@
 package com.example;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
@@ -9,16 +13,23 @@ import org.slf4j.LoggerFactory;
 
 import reactor.core.publisher.Computations;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
 public class FluxFeaturesTests {
 
     private static Logger log = LoggerFactory.getLogger(FluxFeaturesTests.class);
 
+    private static List<String> COLORS = Arrays.asList("red", "white", "blue");
+
+    private Random random = new Random();
+
     private Flux<String> flux;
 
     @Before
     public void generate() throws Exception {
-        this.flux = Flux.just("red", "white", "blue");
+        // this.flux = Flux.range(1, 10).map(i -> COLORS.get(random.nextInt(3)));
+        this.flux = Flux.fromIterable(COLORS);
     }
 
     @Test
@@ -37,42 +48,43 @@ public class FluxFeaturesTests {
     @Test
     public void consume() throws Exception {
         this.flux.log().map(value -> value.toUpperCase()).subscribe(System.out::println);
-        // Same as above but items are printed as they emerge from the end of the operator
+        // Same as above but items are printed as they emerge from the end of
+        // the operator
         // chain
     }
 
     @Test
     public void subscription() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase())
-                .subscribe(new Subscriber<String>() {
+        this.flux.log().map(value -> value.toUpperCase()).subscribe(new Subscriber<String>() {
 
-                    private long count = 0;
-                    private Subscription subscription;
+            private long count = 0;
+            private Subscription subscription;
 
-                    @Override
-                    public void onSubscribe(Subscription subscription) {
-                        this.subscription = subscription;
-                        subscription.request(2);
-                    }
+            @Override
+            public void onSubscribe(Subscription subscription) {
+                this.subscription = subscription;
+                subscription.request(2);
+            }
 
-                    @Override
-                    public void onNext(String t) {
-                        this.count++;
-                        if (this.count >= 2) {
-                            this.count = 0;
-                            this.subscription.request(2);
-                        }
-                    }
+            @Override
+            public void onNext(String t) {
+                this.count++;
+                if (this.count >= 2) {
+                    this.count = 0;
+                    this.subscription.request(2);
+                }
+            }
 
-                    @Override
-                    public void onError(Throwable t) {
-                    }
+            @Override
+            public void onError(Throwable t) {
+            }
 
-                    @Override
-                    public void onComplete() {
-                    }
-                });
-        // Logs the subscription, requests 2 at a time, all elements and completion.
+            @Override
+            public void onComplete() {
+            }
+        });
+        // Logs the subscription, requests 2 at a time, all elements and
+        // completion.
     }
 
     @Test
@@ -84,8 +96,8 @@ public class FluxFeaturesTests {
 
     @Test
     public void parallel() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase())
-                .subscribeOn(Computations.parallel()).useCapacity(2).subscribe();
+        this.flux.log().map(value -> value.toUpperCase()).subscribeOn(Computations.parallel()).useCapacity(2)
+                .subscribe();
         // Logs the subscription, requests 2 at a time, all elements and finally
         // completion.
         Thread.sleep(500L);
@@ -93,8 +105,10 @@ public class FluxFeaturesTests {
 
     @Test
     public void concurrent() throws Exception {
-        this.flux.log().map(String::toUpperCase).subscribeOn(Computations.concurrent())
-                .useCapacity(2).subscribe();
+        Scheduler scheduler = Computations.parallel();
+        this.flux.log().flatMap(value -> Mono.just(value.toUpperCase()).subscribeOn(scheduler), 2).subscribe(value -> {
+            log.info("Consumed: " + value);
+        });
         // Logs the subscription, requests 2 at a time, all elements and finally
         // completion.
         Thread.sleep(500L);
@@ -102,8 +116,8 @@ public class FluxFeaturesTests {
 
     @Test
     public void publish() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase()).subscribeOn(Computations.concurrent())
-                .publishOn(Computations.parallel(), 2).subscribe(value -> {
+        this.flux.log().map(value -> value.toUpperCase()).subscribeOn(Computations.parallel("sub"))
+                .publishOn(Computations.parallel("pub"), 2).subscribe(value -> {
                     log.info("Consumed: " + value);
                 });
         // Logs the consumed messages in a separate thread.

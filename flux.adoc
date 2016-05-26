@@ -243,28 +243,41 @@ the result can be seen in the output:
 
 TIP: if you write this code yourself, or copy-paste it, remember to wait for the processing to stop before the JVM exits.
 
-Note that the subscription, and all the processing, takes place on a background thread "parallel-1-1" -- this is the result of using `Executors.parallel()`, which is designed for dispatching CPU-intensive work (you don't care if it blocks because it all has to get done and it will only cost more to fan it out). We also want to be able to handle the opposite scenario, where the processing is I/O intensive and possibly blocking. In this case, you are adapting an underlying blocking API, and you just want to get it done as quickly as possible without blocking the caller. A thread pool is still your friend, and that's what you get from `Executors.concurrent()`. It's not appropriate for a fast consumer like our string transformation, but lets just look at what happens to the output when we switch executors:
+Note that the subscription, and all the processing, takes place on a background thread "parallel-1-1" -- this is because we asked for the subscriber to our main `Flux` to be on a single background thread. This is fine (but pointless being in a background thread, in point of fact) if the item processing is CPU intensive. You might also want to be able to perform item processing that is I/O intensive and possibly blocking. In this case, you would be adapting an underlying blocking API, and you just want to get it done as quickly as possible without blocking the caller. A thread pool is still your friend, and that's what you get from `Executors.parallel()`. To switch the processing of the individual items to separate threads (up to the limit of the pool) we need to break them out into separate publishers, and for each of those publishers ask. One way to do this is with an operator called `flatMap()`, which maps the items to a `Publisher` (potentially of a different type), and then back to a stream of the new type:
 
 ```java
+Scheduler scheduler = Executors.parallel();
 Flux.just("red", "white", "blue");
   .log()
-  .map(String::toUpperCase)
-  .subscribeOn(Executors.concurrent())
-.useCapacity(2)
-.subscribe()
+  .flatMap(value -> 
+    Mono.just(value.toUpperCase())
+      .subscribeOn(scheduler),
+    2)
+.subscribe(value -> {
+  log.info("Consumed: " + value);
+})
 ```
 
+There are 2 important things to note here. First is the shared `Scheduler`, which is to avoid `Executors.parallel()` being called multiple times, since it is nested in a callback. And second is the use of `flatMap()` to push the items down into a "child" publisher, where we can control the subscription. Reactor has built in default behaviour to hang onto a single thread as long as possible, so we need to be explicit if we want it to process specific items or groups of items in a background thread. This is one of a handful of recognized tricks for forcing parallel processing (see the https://github.com/reactor/reactive-streams-commons/issues/21(Reactive Gems) issue for more detail).
+
+The output looks like this:
+
 ```
-13:52:24.017 [concurrent-2] INFO reactor.core.publisher.FluxLog -  onSubscribe(reactor.core.publisher.FluxArray$ArraySubscription@663d9dce)
-13:52:24.019 [concurrent-2] INFO reactor.core.publisher.FluxLog -  request(2)
-13:52:24.019 [concurrent-2] INFO reactor.core.publisher.FluxLog -  onNext(red)
-13:52:24.020 [concurrent-2] INFO reactor.core.publisher.FluxLog -  onNext(white)
-13:52:24.020 [concurrent-3] INFO reactor.core.publisher.FluxLog -  request(2)
-13:52:24.020 [concurrent-3] INFO reactor.core.publisher.FluxLog -  onNext(blue)
-13:52:24.020 [concurrent-3] INFO reactor.core.publisher.FluxLog -  onComplete()
+15:24:36.596 [main] INFO reactor.core.publisher.FluxLog -  onSubscribe(reactor.core.publisher.FluxIterable$IterableSubscription@6f1fba17)
+15:24:36.610 [main] INFO reactor.core.publisher.FluxLog -  request(2)
+15:24:36.610 [main] INFO reactor.core.publisher.FluxLog -  onNext(red)
+15:24:36.613 [main] INFO reactor.core.publisher.FluxLog -  onNext(white)
+15:24:36.613 [parallel-1-1] INFO com.example.FluxFeaturesTests - Consumed: RED
+15:24:36.613 [parallel-1-1] INFO reactor.core.publisher.FluxLog -  request(1)
+15:24:36.613 [parallel-1-1] INFO reactor.core.publisher.FluxLog -  onNext(blue)
+15:24:36.613 [parallel-1-1] INFO reactor.core.publisher.FluxLog -  onComplete()
+15:24:36.614 [parallel-3-1] INFO com.example.FluxFeaturesTests - Consumed: BLUE
+15:24:36.617 [parallel-2-1] INFO com.example.FluxFeaturesTests - Consumed: WHITE
 ```
 
-Notice that there are now 2 threads processing the items, one for each "chunk" of data, separated by the "capacity" configuration. You might need to run this code a few times to get the same result because it's backed by a thread pool and the worker is selected essentially at random, so sometimes the same thread processes all the items.
+Notice that there are now multiple threads consuming the items, and the concurrency hint in the `flatMap()` ensures that there are 2 items being processed at any given time, as long as they are available. We see `request(1)` a lot because the system is trying to keep 2 items in the pipeline, and generally they don't finish processing at the same time, so it only ever needs one more to top up to the desired concurrency.
+
+TIP: Three items ("red", "white", "blue") might be too few to convincingly see more than one background thread, so we need to generate a bit more data. You could do that with a random number generator, for instance.
 
 TODO: Replace `Computations` with `Executors` (API change in Reactor 2.5.0.M3).
 
@@ -274,8 +287,8 @@ TODO: Replace `Computations` with `Executors` (API change in Reactor 2.5.0.M3).
 Flux.just("red", "white", "blue");
   .log()
   .map(String::toUpperCase)
-  .subscribeOn(Computations.concurrent())
-  .publishOn(Executors.concurrent(), 2)
+  .subscribeOn(Computations.parallel("sub"))
+  .publishOn(Executors.parallel("pub"), 2)
 .subscribe(value -> {
     log.info("Consumed: " + value);
 });
@@ -284,29 +297,29 @@ Flux.just("red", "white", "blue");
 The output looks like this:
 
 ```
-14:29:00.410 [concurrent-4] INFO reactor.core.publisher.FluxLog -  onSubscribe(reactor.core.publisher.FluxArray$ArraySubscription@53b06015)
-14:29:00.412 [concurrent-4] INFO reactor.core.publisher.FluxLog -  request(2)
-14:29:00.412 [concurrent-4] INFO reactor.core.publisher.FluxLog -  onNext(red)
-14:29:00.412 [concurrent-4] INFO reactor.core.publisher.FluxLog -  onNext(white)
-14:29:00.416 [parallel-1-1] INFO com.example.FluxFeaturesTests - Consumed: RED
-14:29:00.416 [parallel-1-1] INFO com.example.FluxFeaturesTests - Consumed: WHITE
-14:29:00.416 [concurrent-3] INFO reactor.core.publisher.FluxLog -  request(2)
-14:29:00.416 [concurrent-3] INFO reactor.core.publisher.FluxLog -  onNext(blue)
-14:29:00.416 [concurrent-3] INFO reactor.core.publisher.FluxLog -  onComplete()
-14:29:00.416 [parallel-1-1] INFO com.example.FluxFeaturesTests - Consumed: BLUE
+15:12:09.750 [sub-1-1] INFO reactor.core.publisher.FluxLog -  onSubscribe(reactor.core.publisher.FluxIterable$IterableSubscription@172ed57)
+15:12:09.758 [sub-1-1] INFO reactor.core.publisher.FluxLog -  request(2)
+15:12:09.759 [sub-1-1] INFO reactor.core.publisher.FluxLog -  onNext(red)
+15:12:09.759 [sub-1-1] INFO reactor.core.publisher.FluxLog -  onNext(white)
+15:12:09.770 [pub-1-1] INFO com.example.FluxFeaturesTests - Consumed: RED
+15:12:09.771 [pub-1-1] INFO com.example.FluxFeaturesTests - Consumed: WHITE
+15:12:09.777 [sub-1-1] INFO reactor.core.publisher.FluxLog -  request(2)
+15:12:09.777 [sub-1-1] INFO reactor.core.publisher.FluxLog -  onNext(blue)
+15:12:09.777 [sub-1-1] INFO reactor.core.publisher.FluxLog -  onComplete()
+15:12:09.783 [pub-1-1] INFO com.example.FluxFeaturesTests - Consumed: BLUE
 ```
 
-Notice that the consumer callbacks (logging "Consumed: ...") are on the publisher thread `parallel-1-1`. If you take out the `subscribeOn()` call, you might see all of the 2nd chunk of data processed on the `parallel-1-1` thread as well. This, again, is Reactor being frugal with threads -- if there's no explicit request to switch threads it stays on the same one for the next call, whatever that is.
+Notice that the consumer callbacks (logging "Consumed: ...") are on the publisher thread `pub-1-1`. If you take out the `subscribeOn()` call, you might see all of the 2nd chunk of data processed on the `pub-1-1` thread as well. This, again, is Reactor being frugal with threads -- if there's no explicit request to switch threads it stays on the same one for the next call, whatever that is.
 
 NOTE: We switched in this sample from `useCapacity(2)` to adding a `prefetch=2` to the `publishOn()`. The configurers are only hints, and sometimes they conflict with each other, and Reactor has to choose one over the other. This is a case where the `useCapacity()` hint would have been ignored.
 
 === Converters: The Subscribers from Dark Side
 
-There is another way to subscribe to a stream, which is to call a converter method. `Flux` has `toStream()`, `toList()` and `toMap()`, and `Mono` has `get()` and `toFuture()`.
+There is another way to subscribe to a stream, which is to call `Mono.get()` or a converter method followed by `get()`. `Flux` has converters `toStream()`, `toList()` and `toMap()`, and `Mono` has `toFuture()`. The `toList()` and `toMap()` converter methods don't actually subscribe to the stream, but they do throw away any control you might have had over the suscription.
 
-WARNING: A good rule of thumb is "**never call a converter**" (i.e. `get()` or the `to*()` methods on `Mono` and `Flux`).
+WARNING: A good rule of thumb is "**never call get()**". The exception to the rule is in tests: it's useful to be able to block a test to allow results to accumulate.
 
-These methods are only there as an escape hatch to bridge from Reactive to blocking, if you need to adapt to a legacy API, for instance. When you call `Mono.get()` you throw away all the benefits of the Reactive Streams. This is the key difference between Reactive Streams and Java 8 `Streams` -- the native Java `Stream` only has the "all or nothing" subscription model, the equivalent of `Mono.get()`. Of course `subscribe()` can block the calling thread as well, so it's just as dangerous as the converter methods, but you have more control -- you can prevent it from blocking by using `subscribeOn()` and you can drip the items through by applying back pressure and periodically deciding whether to continue.
+These methods are there as an escape hatch to bridge from Reactive to blocking; if you need to adapt to a legacy API, for instance. When you call `Mono.get()` you throw away all the benefits of the Reactive Streams. This is the key difference between Reactive Streams and Java 8 `Streams` -- the native Java `Stream` only has the "all or nothing" subscription model, the equivalent of `Mono.get()`. Of course `subscribe()` can block the calling thread as well, so it's just as dangerous as the converter methods, but you have more control -- you can prevent it from blocking by using `subscribeOn()` and you can drip the items through by applying back pressure and periodically deciding whether to continue.
 
 == Conclusion
 
