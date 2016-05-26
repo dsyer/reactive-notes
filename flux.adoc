@@ -30,23 +30,23 @@ Now let's write some code.
 
 == What Makes it Functional?
 
-The basic building block of Reactive is a stream of events, and two protagonists, a publisher and a subscriber to those events. It's OK to call it a "stream" because that's what it is. If we need to, we will use the word "stream" with a small "s", but Java 8 has a `java.util.Stream` which is different, so try not to get confused. We will try to concentrate the narrative on the publisher and subscriber anyway (that's what Reactive Streams does).
+The basic building block of Reactive is a sequence of events, and two protagonists, a publisher and a subscriber to those events. It's also OK to call a sequence a "stream" because that's what it is. If we need to, we will use the word "stream" with a small "s", but Java 8 has a `java.util.Stream` which is different, so try not to get confused. We will try to concentrate the narrative on the publisher and subscriber anyway (that's what Reactive Streams does).
 
 Reactor is the library we are going to use in samples, so we'll stick to the notation there, and call the publisher a `Flux` (it implements the interface `Publisher` from Reactive Streams). The RxJava library is very similar and has a lot of parallel features, so in that case we would be talking about an `Observable` instead, but the code would be very similar. (Reactor 2.0 called it a `Stream` which is confusing if we need to talk about Java 8 `Streams` as well, so we'll only use the new code in Reactor 2.5.)
 
 === Generators
 
-A `Flux` is a publisher of a stream of events of a specific POJO type, so it is generic, i.e. `Flux<T>` is a publisher of `T`. `Flux` has some static convenience methods to create instances of itself from a variety of sources. For example, to create a `Flux` from an array:
+A `Flux` is a publisher of a sequence of events of a specific POJO type, so it is generic, i.e. `Flux<T>` is a publisher of `T`. `Flux` has some static convenience methods to create instances of itself from a variety of sources. For example, to create a `Flux` from an array:
 
 ```java
 Flux<String> flux = Flux.just("red", "white", "blue");
 ```
 
-We just generated a `Flux`, and now we can do stuff with it. There are actually only three things you can do with it: operate on it (transform it, or combine it with other streams), subscribe to it (it's a publisher), or configure it (modify the behaviour of subscribers).
+We just generated a `Flux`, and now we can do stuff with it. There are actually only three things you can do with it: operate on it (transform it, or combine it with other sequences), subscribe to it (it's a publisher), or configure it (modify the behaviour of subscribers).
 
-=== Single Valued Streams
+=== Single Valued Sequences
 
-Often you encounter a stream that you know has only one or zero elements, for example a repository method that finds an entity by its id. Reactor has a `Mono` type representing a single valued or empty `Flux`. `Mono` has a very similar API to `Flux` but more focused because not all operators make sense for single-valued streams. RxJava also has a bolt on (in version 1.x) called `Single`, and also `Completable` for an empty stream.
+Often you encounter a sequence that you know has only one or zero elements, for example a repository method that finds an entity by its id. Reactor has a `Mono` type representing a single valued or empty `Flux`. `Mono` has a very similar API to `Flux` but more focused because not all operators make sense for single-valued sequences. RxJava also has a bolt on (in version 1.x) called `Single`, and also `Completable` for an empty sequence.
 
 === Operators
 
@@ -66,7 +66,7 @@ In this code we transformed the strings in the input by converting them to upper
 
 What's interesting about this little sample -- mind blowing, even, if you're not used to it -- is that no data have been processed yet. Nothing has even been logged because literally, nothing happened (try it and you will see). Calling operators on a `Flux` amounts to building a plan of execution for later. It is completely declarative, and it's why people call it "functional". The logic implemented in the operators is only executed when data starts to flow, and that doesn't happen until someone subscribes to the `Flux` (or equivalently to the `Publisher`).
 
-The same declarative, functional approach to processing a stream of data exists in all Reactive libraries, and also in Java 8 `Streams`. Consider this, similar looking code, using a `Stream` with the same contents as the `Flux`:
+The same declarative, functional approach to processing a sequence of data exists in all Reactive libraries, and also in Java 8 `Streams`. Consider this, similar looking code, using a `Stream` with the same contents as the `Flux`:
 
 ```java
 Stream<String> stream = Streams.of("red", "white", "blue");
@@ -82,7 +82,7 @@ TIP: There is a useful blog by Sebastien Deleuze on https://spring.io/blog/2016/
 
 === Subscribers
 
-To make the data flow you have to subscribe to the `Flux` using one of the `subscribe()` methods. Only those methods make the data flow. They reach back through the chain of operators you declared on your stream (if any) and request the publisher to start creating data. In the sample samples we have been working with, this means the underlying collection of strings is iterated. In more complicated use case it might trigger a file to be read from the filesystem, or a pull from a database or a call to an HTTP service.
+To make the data flow you have to subscribe to the `Flux` using one of the `subscribe()` methods. Only those methods make the data flow. They reach back through the chain of operators you declared on your sequence (if any) and request the publisher to start creating data. In the sample samples we have been working with, this means the underlying collection of strings is iterated. In more complicated use case it might trigger a file to be read from the filesystem, or a pull from a database or a call to an HTTP service.
 
 Here's a call to `subscribe()` in action:
 
@@ -104,9 +104,9 @@ The output is:
 09:17:59.667 [main] INFO reactor.core.publisher.FluxLog -  onComplete()
 ```
 
-So we can see from this that the effect of `subscribe()` without an argument, is to request the publisher to send _all_ data -- there's only one `request()` logged and it's "unbounded". We can also see callbacks for each item that is published (`onNext()`), for the end of the stream (`onComplete()`), and for the original subscription (`onSubscribe()`). If you needed to you could listen for those events yourself using the `doOn*()` methods in `Flux` (which are themselves operators, not subscribers, so they don't cause any data to flow on their own).
+So we can see from this that the effect of `subscribe()` without an argument, is to request the publisher to send _all_ data -- there's only one `request()` logged and it's "unbounded". We can also see callbacks for each item that is published (`onNext()`), for the end of the sequence (`onComplete()`), and for the original subscription (`onSubscribe()`). If you needed to you could listen for those events yourself using the `doOn*()` methods in `Flux` (which are themselves operators, not subscribers, so they don't cause any data to flow on their own).
 
-The `subscribe()` method is overloaded, and the other variants give you different options to control what happens. One important and convenient form is `subscribe()` with callbacks as arguments. The first argument is a `Consumer`, which gives you a callback with each of the items, and you can also optionally add a `Consumer` for an error if there is one, and a vanilla `Runnable` to execute when the stream is complete. For example, just with the per-item callback:
+The `subscribe()` method is overloaded, and the other variants give you different options to control what happens. One important and convenient form is `subscribe()` with callbacks as arguments. The first argument is a `Consumer`, which gives you a callback with each of the items, and you can also optionally add a `Consumer` for an error if there is one, and a vanilla `Runnable` to execute when the sequence is complete. For example, just with the per-item callback:
 
 ```java
 Flux.just("red", "white", "blue");
@@ -212,7 +212,7 @@ Flux.just("red", "white", "blue");
 10:25:43.741 [main] INFO reactor.core.publisher.FluxLog -  onComplete()
 ```
 
-TIP: A library that will process streams for you, like Spring Reactive Web, can handle the configuration concerns, as well as the subscriptions. It's good to be able to push these concerns down the stack because it saves you from cluttering your code with non-business logic, making it more readable and easier to test and maintain. So as a rule, it is a good thing if you can **avoid calling configurers**, or at least push that code into a processing layer, and out of the business logic.
+TIP: A library that will process sequences for you, like Spring Reactive Web, can handle the configuration concerns, as well as the subscriptions. It's good to be able to push these concerns down the stack because it saves you from cluttering your code with non-business logic, making it more readable and easier to test and maintain. So as a rule, it is a good thing if you can **avoid calling configurers**, or at least push that code into a processing layer, and out of the business logic.
 
 === Threads, Dispatchers and Background Processing
 
@@ -243,7 +243,7 @@ the result can be seen in the output:
 
 TIP: if you write this code yourself, or copy-paste it, remember to wait for the processing to stop before the JVM exits.
 
-Note that the subscription, and all the processing, takes place on a background thread "parallel-1-1" -- this is because we asked for the subscriber to our main `Flux` to be on a single background thread. This is fine (but pointless being in a background thread, in point of fact) if the item processing is CPU intensive. You might also want to be able to perform item processing that is I/O intensive and possibly blocking. In this case, you would be adapting an underlying blocking API, and you just want to get it done as quickly as possible without blocking the caller. A thread pool is still your friend, and that's what you get from `Executors.parallel()`. To switch the processing of the individual items to separate threads (up to the limit of the pool) we need to break them out into separate publishers, and for each of those publishers ask. One way to do this is with an operator called `flatMap()`, which maps the items to a `Publisher` (potentially of a different type), and then back to a stream of the new type:
+Note that the subscription, and all the processing, takes place on a background thread "parallel-1-1" -- this is because we asked for the subscriber to our main `Flux` to be on a single background thread. This is fine (but pointless being in a background thread, in point of fact) if the item processing is CPU intensive. You might also want to be able to perform item processing that is I/O intensive and possibly blocking. In this case, you would be adapting an underlying blocking API, and you just want to get it done as quickly as possible without blocking the caller. A thread pool is still your friend, and that's what you get from `Executors.parallel()`. To switch the processing of the individual items to separate threads (up to the limit of the pool) we need to break them out into separate publishers, and for each of those publishers ask. One way to do this is with an operator called `flatMap()`, which maps the items to a `Publisher` (potentially of a different type), and then back to a sequence of the new type:
 
 ```java
 Scheduler scheduler = Executors.parallel();
@@ -315,7 +315,7 @@ NOTE: We switched in this sample from `useCapacity(2)` to adding a `prefetch=2` 
 
 === Extractors: The Subscribers from the Dark Side
 
-There is another way to subscribe to a stream, which is to call `Mono.get()` or `Mono.toFuture()` or `Flux.toStream()` (these are the "extractor" methods -- they get you out of the Reactive types into a less flexible, blocking abstraction). `Flux` also has converters `toList()` and `toMap()` that convert from `FLux` to `Mono`. They don't actually subscribe to the stream, but they do throw away any control you might have had over the suscription at the level of the items.
+There is another way to subscribe to a sequence, which is to call `Mono.get()` or `Mono.toFuture()` or `Flux.toStream()` (these are the "extractor" methods -- they get you out of the Reactive types into a less flexible, blocking abstraction). `Flux` also has converters `toList()` and `toMap()` that convert from `FLux` to `Mono`. They don't actually subscribe to the sequence, but they do throw away any control you might have had over the suscription at the level of the items.
 
 WARNING: A good rule of thumb is "**never call an extractor**". There are some exceptions (otherwise the methods would not exist). One notable exception is in tests because it's useful to be able to block to allow results to accumulate.
 
