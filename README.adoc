@@ -17,7 +17,7 @@ TODO: tidy this up...
 since callback is called for each subscriber you can use operators that share a context
 
 
- ```
+```
 Mono.defer( () -> {
   AtomicInteger d = new AtomicNumber();     
   return Mono.just(1)
@@ -27,7 +27,6 @@ Mono.defer( () -> {
 ```
 
 `d` here is scoped for a given `Subscriber` that can be useful
-
 
 == Don't Be the Bottleneck
 
