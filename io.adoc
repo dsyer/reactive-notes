@@ -1,89 +1,10 @@
-```java
-    @RequestMapping("/parallel")
-    public Mono<Result> parallel() {
-        log.info("Handling /parallel");
-        Scheduler scheduler = Computations.parallel();
-        return Flux.range(1, 10) // <1>
-                .log() //
-                .flatMap( // <2>
-                        value -> Mono.fromCallable(() -> block(value)) // <3>
-                                .subscribeOn(scheduler), // <4>
-                        4) // <5>
-                .collect(Result::new, Result::add) // <6>
-                .doOnSuccess(result -> {
-                    scheduler.shutdown();
-                    result.stop(); // <7>
-                });
-    }
-```
-<1> make 10 calls
-<2> drop down to a new publisher to process in parallel
-<3> blocking code here inside a Callable to defer execution
-<4> subscribe to the slow publisher on a background thread
-<5> concurrency hint in flatMap
-<6> collect results and aggregate into a single object
-<7> at the end stop the clock
+:github: https://github.com/dsyer/reactive-notes
+:master: {github}/blob/master
+:partii: {master}/flux.adoc
+:partiv: {master}/platform.adoc
 
-```
-$ ab -c 4 -n 600 http://server:8080/parallel
-```
+In this article we continue the series on {partii}[Reactive Programming], and the focus is on more concrete use cases and writing code that actually does something useful. We will see how Reactive is a useful abstraction for concurrent programming, but also that it has some very low level features that we should learn to treat with respect and caution. If we start to use these features to their full potential we can take control of layers in our application that previously were invisible, hidden by containers, platforms and frameworks.
 
-Tomcat 8.0.33 and Spring MVC
+== Power and Responsibility
 
-```
-Percentage of the requests served within a certain time (ms)
-  50%    777
-  66%    797
-  75%    816
-  80%    832
-  90%   1013
-  95%   1262
-  98%   3109
-  99%  15798
- 100%  30223 (longest request)
-```
-
-Tomcat 8.0.33 and Spring Reactive:
-
-```
-Percentage of the requests served within a certain time (ms)
-  50%    424
-  66%    491
-  75%    508
-  80%    520
-  90%    552
-  95%    611
-  98%    651
-  99%    701
- 100%   1135 (longest request)
-```
-
-Tomcat 8.5.2 and Spring Reactive:
-
-```
-Percentage of the requests served within a certain time (ms)
-  50%    415
-  66%    493
-  75%    509
-  80%    519
-  90%    583
-  95%    682
-  98%    843
-  99%    973
- 100%   1058 (longest request)
-```
-
-Reactor IO (Netty) and Spring Reactive:
-
-```
-Percentage of the requests served within a certain time (ms)
-  50%    552
-  66%    576
-  75%    593
-  80%    601
-  90%    625
-  95%    658
-  98%    700
-  99%    728
- 100%    764 (longest request)
-```
+We may soon truly begin to see the power of the Reactive approach, but remember that with power comes responsibility. It's radical, and it's fundamental. It's "rip it up and start again" territory. So you will also hopefully appreciate that Reactive isn't a solution to all problems. In fact it isn't a solution to any problem, it merely facilitates the solution of a certain class of problems. The benefits you get from using it might be outweighed by the costs of learning it and maintaining the code afterwards, so tread carefully.

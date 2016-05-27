@@ -2,7 +2,7 @@
 :master: {github}/blob/master
 :parti: {master}/intro.adoc
 
-In this article we continue the series on {parti}[Reactive Programming], we concentrate on explaining some concepts through actual code samples. The end result should be that you understand the power of the Reactive approach, but remember that with power comes responsibility. It's radical, and it's fundamental. It's "rip it up and start again" territory. So you will also hopefully appreciate that Reactive isn't a solution to all problems. In fact it isn't a solution to any problem, it merely facilitates the solution of a certain class of problems. The benefits you get from using it might be outweighed by the costs of learning it and maintaining the code afterwards, so tread carefully.
+In this article we continue the series on {parti}[Reactive Programming], and we concentrate on explaining some concepts through actual code samples. The end result should be that you understand a bit better what makes Reactive different, and what makes it functional. The examples here are quite abstract, but they give you a way to think about the APIs and the programming style, and start to get a feel for how it is different. We will see the elements of Reactive, and learn how to control the flow of data, and process in background threads if necessary.
 
 == Setting Up a Project
 

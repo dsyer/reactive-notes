@@ -2,9 +2,65 @@
 
 include::intro.adoc[leveloffset=+1]
 
-== Reactive Programming in Java
+== Basics of Reactive Programming in Java
 
 include::flux.adoc[leveloffset=+1]
+
+== Concurrent Programming
+
+include::io.adoc[leveloffset=+1]
+
+== Server Platforms
+
+include::platform.adoc[leveloffset=+1]
+
+TODO: more chat to tidy up
+
+```
+Tomcat 8.0 is already Servlet 3.1 compliant, which is what we need
+
+If I remember correctly, Tomcat 8.5 is major refactoring that was supposed to be in 9.x, but since the Servlet 4 spec took so long Mark decided to release separate of that
+
+David Syer [10:53 AM] 
+There must be a downside then?
+
+Servlet 3.1 is not the bees knees, from what I dimly understand eavesdropping here
+
+Arjen Poutsma [10:53 AM] 
+nope
+
+for optimal reactiveness, use a Netty-based solution
+
+David Syer [10:54 AM] 
+Define "optimal"
+
+Arjen Poutsma [10:56 AM] 
+the servlet 3.1 asynchronous model is ultimately based on a synchronous underlying API
+
+so rather than exposing Futures or similar constructs, it exposes listeners, and you get a callback when you can read from/write to the ServletInput/OutputStream
+
+such a solution will only get you so far
+
+not to mention that it is still byte[]-based, and does not expose ByteBuffers in any way
+
+to be honest, there is no way to answer your question yet, as we haven’t done any serious performance testing. But we ​*expect*​ Netty to be a better fit, since its threading model is more close aligned to a reactive world. Servlet containers still use a one-thread-per-request model, even if you are using the async support
+
+David Syer [11:02 AM] 
+Brilliant.
+
+Arjen Poutsma [11:03 AM] 
+so threading is reason one, exposing byte buffers is reason two for preferring netty
+
+David Syer [11:03 AM] 
+But buffers are just more efficient?
+
+Because of heap memory?
+
+Arjen Poutsma [11:03 AM] 
+yes
+
+and non-blockingness of the java.nio API
+```
 
 == The Role of Back Pressure
 

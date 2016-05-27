@@ -16,7 +16,6 @@
 package com.example;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -37,15 +36,16 @@ import reactor.core.scheduler.Scheduler;
 
 @SpringBootApplication
 @RestController
-public class DemoApplication {
+public class ReactiveApplication {
 
-    private static Logger log = LoggerFactory.getLogger(DemoApplication.class);
+    private static Logger log = LoggerFactory.getLogger(ReactiveApplication.class);
     private RestTemplate restTemplate = new RestTemplate();
+    // private Scheduler scheduler = Computations.parallel("sub", 16, 40);
 
     @RequestMapping("/parallel")
-    public CompletableFuture<Result> parallel() {
-        Scheduler scheduler = Computations.parallel();
+    public Mono<Result> parallel() {
         log.info("Handling /parallel");
+        Scheduler scheduler = Computations.parallel();
         return Flux.range(1, 10) // <1>
                 .log() //
                 .flatMap( // <2>
@@ -53,8 +53,7 @@ public class DemoApplication {
                                 .subscribeOn(scheduler), // <4>
                         4) // <5>
                 .collect(Result::new, Result::add) // <6>
-                .doOnSuccess(Result::stop) // <7>
-                .toCompletableFuture();
+                .doOnSuccess(result -> { scheduler.shutdown(); result.stop(); }); // <7>
 
         // <1> make 10 calls
         // <2> drop down to a new publisher to process in parallel
@@ -67,17 +66,16 @@ public class DemoApplication {
     }
 
     @RequestMapping("/serial")
-    public CompletableFuture<Result> serial() {
-        log.info("Handling /serial");
+    public Mono<Result> serial() {
         Scheduler scheduler = Computations.parallel();
+                log.info("Handling /serial");
         return Flux.range(1, 10) // <1>
                 .log() //
                 .map( // <2>
                         value -> block(value)) // <3>
                 .collect(Result::new, Result::add) // <4>
-                .subscribeOn(scheduler) // <6>
-                .doOnSuccess(result -> { scheduler.shutdown(); result.stop();} ) // <5>
-                .toCompletableFuture();
+                .doOnSuccess(Result::stop) // <5>
+                .subscribeOn(scheduler); // <6>
         // <1> make 10 calls
         // <2> stay in the same publisher chain
         // <3> blocking call not deferred (no point in this case)
@@ -91,7 +89,7 @@ public class DemoApplication {
     }
 
     public static void main(String[] args) {
-        SpringApplication.run(DemoApplication.class, args);
+        SpringApplication.run(ReactiveApplication.class, args);
     }
 
 }
