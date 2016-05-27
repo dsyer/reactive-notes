@@ -10,7 +10,10 @@
                                 .subscribeOn(scheduler), // <4>
                         4) // <5>
                 .collect(Result::new, Result::add) // <6>
-                .doOnSuccess(Result::stop); // <7>
+                .doOnSuccess(result -> {
+                    scheduler.shutdown();
+                    result.stop(); // <7>
+                });
     }
 ```
 <1> make 10 calls
@@ -44,28 +47,43 @@ Tomcat 8.0.33 and Spring Reactive:
 
 ```
 Percentage of the requests served within a certain time (ms)
-  50%    484
-  66%    509
-  75%    527
-  80%    538
-  90%    591
-  95%    841
-  98%   1186
-  99%   1782
- 100%   5770 (longest request)
+  50%    424
+  66%    491
+  75%    508
+  80%    520
+  90%    552
+  95%    611
+  98%    651
+  99%    701
+ 100%   1135 (longest request)
 ```
 
-Reactor IO (Netty) and Spring Recative:
+Tomcat 8.5.2 and Spring Reactive:
 
 ```
 Percentage of the requests served within a certain time (ms)
-  50%    571
-  66%    592
-  75%    608
-  80%    620
-  90%    700
-  95%    856
-  98%   1603
-  99%   2096
- 100%   2819 (longest request)
+  50%    415
+  66%    493
+  75%    509
+  80%    519
+  90%    583
+  95%    682
+  98%    843
+  99%    973
+ 100%   1058 (longest request)
+```
+
+Reactor IO (Netty) and Spring Reactive:
+
+```
+Percentage of the requests served within a certain time (ms)
+  50%    552
+  66%    576
+  75%    593
+  80%    601
+  90%    625
+  95%    658
+  98%    700
+  99%    728
+ 100%    764 (longest request)
 ```
