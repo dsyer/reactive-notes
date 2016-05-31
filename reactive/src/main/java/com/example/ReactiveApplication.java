@@ -25,9 +25,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.client.reactive.ReactorHttpClientRequestFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.reactive.HttpRequestBuilders;
+import org.springframework.web.client.reactive.WebClient;
+import org.springframework.web.client.reactive.WebResponseExtractors;
 
 import reactor.core.publisher.Computations;
 import reactor.core.publisher.Flux;
@@ -40,6 +44,7 @@ public class ReactiveApplication {
 
     private static Logger log = LoggerFactory.getLogger(ReactiveApplication.class);
     private RestTemplate restTemplate = new RestTemplate();
+    private WebClient client = new WebClient(new ReactorHttpClientRequestFactory());
     // private Scheduler scheduler = Computations.parallel("sub", 16, 40);
 
     @RequestMapping("/parallel")
@@ -53,7 +58,10 @@ public class ReactiveApplication {
                                 .subscribeOn(scheduler), // <4>
                         4) // <5>
                 .collect(Result::new, Result::add) // <6>
-                .doOnSuccess(result -> { scheduler.shutdown(); result.stop(); }); // <7>
+                .doOnSuccess(result -> {
+                    scheduler.shutdown();
+                    result.stop();
+                }); // <7>
 
         // <1> make 10 calls
         // <2> drop down to a new publisher to process in parallel
@@ -68,7 +76,7 @@ public class ReactiveApplication {
     @RequestMapping("/serial")
     public Mono<Result> serial() {
         Scheduler scheduler = Computations.parallel();
-                log.info("Handling /serial");
+        log.info("Handling /serial");
         return Flux.range(1, 10) // <1>
                 .log() //
                 .map( // <2>
@@ -84,11 +92,33 @@ public class ReactiveApplication {
         // <6> subscribe on a background thread
     }
 
+    @RequestMapping("/netty")
+    public Mono<Result> netty() {
+        log.info("Handling /netty");
+        return Flux.range(1, 10) // <1>
+                .log() //
+                .flatMap(this::fetch) // <2>
+                .collect(Result::new, Result::add).doOnSuccess(Result::stop); // <3>
+
+        // <1> make 10 calls
+        // <2> drop down to a new publisher to process in parallel
+        // <3> at the end stop the clock
+
+    }
+
     private HttpStatus block(int value) {
-        return restTemplate.getForEntity("http://example.com", String.class, value).getStatusCode();
+        return this.restTemplate.getForEntity("http://example.com", String.class, value)
+                .getStatusCode();
+    }
+
+    private Mono<HttpStatus> fetch(int value) {
+        return this.client.perform(HttpRequestBuilders.get("http://example.com"))
+                .extract(WebResponseExtractors.response(String.class))
+                .map(response -> response.getStatusCode());
     }
 
     public static void main(String[] args) {
+        System.setProperty("reactor.io.epoll", "false");
         SpringApplication.run(ReactiveApplication.class, args);
     }
 
@@ -103,21 +133,21 @@ class Result {
     private long duration;
 
     public long add(HttpStatus status) {
-        AtomicLong value = counts.getOrDefault(status, new AtomicLong());
-        counts.putIfAbsent(status, value);
+        AtomicLong value = this.counts.getOrDefault(status, new AtomicLong());
+        this.counts.putIfAbsent(status, value);
         return value.incrementAndGet();
     }
 
     public void stop() {
-        this.duration = System.currentTimeMillis() - timestamp;
+        this.duration = System.currentTimeMillis() - this.timestamp;
     }
 
     public long getDuration() {
-        return duration;
+        return this.duration;
     }
 
     public Map<HttpStatus, AtomicLong> getCounts() {
-        return counts;
+        return this.counts;
     }
 
 }

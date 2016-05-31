@@ -38,9 +38,9 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
 @RestController("/stores")
-public class StoreGatherer {
+public class RestTemplateStoreGatherer {
 
-    private static Logger log = LoggerFactory.getLogger(StoreGatherer.class);
+    private static Logger log = LoggerFactory.getLogger(RestTemplateStoreGatherer.class);
     private RestTemplate restTemplate = new RestTemplate();
 
     @RequestMapping

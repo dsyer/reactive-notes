@@ -41,19 +41,19 @@ public class DemoApplication {
 
     private static Logger log = LoggerFactory.getLogger(DemoApplication.class);
     private RestTemplate restTemplate = new RestTemplate();
+    private Scheduler scheduler = Computations.parallel("sub", 64, 16);
 
     @RequestMapping("/parallel")
     public CompletableFuture<Result> parallel() {
-        Scheduler scheduler = Computations.parallel();
         log.info("Handling /parallel");
         return Flux.range(1, 10) // <1>
                 .log() //
                 .flatMap( // <2>
                         value -> Mono.fromCallable(() -> block(value)) // <3>
-                                .subscribeOn(scheduler), // <4>
+                                .subscribeOn(this.scheduler), // <4>
                         4) // <5>
                 .collect(Result::new, Result::add) // <6>
-                .doOnSuccess(Result::stop) // <7>
+                .doOnSuccess(Result::stop ) // <7>
                 .toCompletableFuture();
 
         // <1> make 10 calls
@@ -69,14 +69,13 @@ public class DemoApplication {
     @RequestMapping("/serial")
     public CompletableFuture<Result> serial() {
         log.info("Handling /serial");
-        Scheduler scheduler = Computations.parallel();
         return Flux.range(1, 10) // <1>
                 .log() //
                 .map( // <2>
                         value -> block(value)) // <3>
                 .collect(Result::new, Result::add) // <4>
-                .subscribeOn(scheduler) // <6>
-                .doOnSuccess(result -> { scheduler.shutdown(); result.stop();} ) // <5>
+                .subscribeOn(this.scheduler) // <6>
+                .doOnSuccess(Result::stop) // <5>
                 .toCompletableFuture();
         // <1> make 10 calls
         // <2> stay in the same publisher chain
@@ -87,7 +86,7 @@ public class DemoApplication {
     }
 
     private HttpStatus block(int value) {
-        return restTemplate.getForEntity("http://example.com", String.class, value).getStatusCode();
+        return this.restTemplate.getForEntity("http://example.com", String.class, value).getStatusCode();
     }
 
     public static void main(String[] args) {
@@ -105,21 +104,21 @@ class Result {
     private long duration;
 
     public long add(HttpStatus status) {
-        AtomicLong value = counts.getOrDefault(status, new AtomicLong());
-        counts.putIfAbsent(status, value);
+        AtomicLong value = this.counts.getOrDefault(status, new AtomicLong());
+        this.counts.putIfAbsent(status, value);
         return value.incrementAndGet();
     }
 
     public void stop() {
-        this.duration = System.currentTimeMillis() - timestamp;
+        this.duration = System.currentTimeMillis() - this.timestamp;
     }
 
     public long getDuration() {
-        return duration;
+        return this.duration;
     }
 
     public Map<HttpStatus, AtomicLong> getCounts() {
-        return counts;
+        return this.counts;
     }
 
 }
