@@ -50,7 +50,7 @@ public class RestTemplateStoreGatherer {
                 .flatMap(page -> Flux.defer(() -> page(page)).subscribeOn(scheduler), 2) // <2>
                 .flatMap(store -> Mono.fromCallable(() -> meta(store)).subscribeOn(scheduler), 4) // <3>
                 .take(50) // <4>
-                .toList() // <5>
+                .asList() // <5>
                 .toCompletableFuture();
     }
 

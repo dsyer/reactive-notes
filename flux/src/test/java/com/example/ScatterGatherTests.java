@@ -55,7 +55,7 @@ public class ScatterGatherTests {
                         }).subscribeOn(scheduler), 4) //
                         .collect(Result::new, Result::add) //
                         .doOnNext(Result::stop) //
-                        .get() //
+                        .block() //
         );
     }
 
@@ -68,7 +68,7 @@ public class ScatterGatherTests {
                         .flatMap(background(Schedulers.parallel()), 4) //
                         .collect(Result::new, Result::add) //
                         .doOnNext(Result::stop) //
-                        .get() //
+                        .block() //
         );
     }
 
@@ -80,7 +80,7 @@ public class ScatterGatherTests {
             sleep(1000L);
             result.add(value);
         }).doOnComplete(() -> result.stop()).subscribeOn(Schedulers.newParallel("sub"))
-                .publishOn(Schedulers.newParallel("pub"), 4).then().then(Mono.just(result)).get());
+                .publishOn(Schedulers.newParallel("pub"), 4).then().then(Mono.just(result)).block());
     }
 
     @Test
@@ -88,7 +88,7 @@ public class ScatterGatherTests {
         Scheduler scheduler = Schedulers.parallel();
         System.err.println(Flux.range(1, 10).map(i -> COLORS.get(this.random.nextInt(3))).log()
                 .flatMap(value -> Mono.just(value.toUpperCase()).subscribeOn(scheduler), 2)
-                .collect(Result::new, Result::add).doOnNext(Result::stop).get());
+                .collect(Result::new, Result::add).doOnNext(Result::stop).block());
     }
 
     private Function<? super String, ? extends Publisher<? extends String>> background(Scheduler scheduler) {
