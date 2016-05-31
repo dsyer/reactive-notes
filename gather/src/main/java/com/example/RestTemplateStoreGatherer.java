@@ -32,10 +32,10 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import reactor.core.publisher.Computations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 @RestController("/stores")
 public class RestTemplateStoreGatherer {
@@ -45,13 +45,12 @@ public class RestTemplateStoreGatherer {
 
     @RequestMapping
     public CompletableFuture<List<Store>> gather() {
-        Scheduler scheduler = Computations.parallel();
+        Scheduler scheduler = Schedulers.parallel();
         return Flux.range(0, Integer.MAX_VALUE) // <1>
                 .flatMap(page -> Flux.defer(() -> page(page)).subscribeOn(scheduler), 2) // <2>
                 .flatMap(store -> Mono.fromCallable(() -> meta(store)).subscribeOn(scheduler), 4) // <3>
                 .take(50) // <4>
                 .toList() // <5>
-                .doOnTerminate((store, error) -> scheduler.shutdown()) // <6>
                 .toCompletableFuture();
     }
 
@@ -59,17 +58,17 @@ public class RestTemplateStoreGatherer {
     // <2> drop to a background thread to process each page, 2 at a time
     // <3> for each store drop to a background thread to enhance it with metadata, 4 at a time
     // <4> take at most 50
-    // <5> shutdown the thread pool
+    // <5> convert to a list
 
     /**
      * Enhance a Store with some metadata. Blocking.
-     * 
+     *
      * @param store
      *            a Store to enhance
      * @return the enhanced store
      */
     private Store meta(Store store) {
-        Map<String, Object> map = restTemplate.exchange("http://stores.cfapps.io/stores/{id}", HttpMethod.GET, null,
+        Map<String, Object> map = this.restTemplate.exchange("http://stores.cfapps.io/stores/{id}", HttpMethod.GET, null,
                 new ParameterizedTypeReference<Map<String, Object>>() {
                 }, store.getId()).getBody();
         @SuppressWarnings("unchecked")
@@ -80,13 +79,13 @@ public class RestTemplateStoreGatherer {
 
     /**
      * Get a page of stores from the backend, Blocking.
-     * 
+     *
      * @param page
      *            the page number (starting at 0)
      * @return a page of stores (or empty)
      */
     private Flux<Store> page(int page) {
-        Map<String, Object> map = restTemplate.exchange("http://stores.cfapps.io/stores?page={page}", HttpMethod.GET,
+        Map<String, Object> map = this.restTemplate.exchange("http://stores.cfapps.io/stores?page={page}", HttpMethod.GET,
                 null, new ParameterizedTypeReference<Map<String, Object>>() {
                 }, page).getBody();
         @SuppressWarnings("unchecked")
@@ -119,11 +118,11 @@ class Store {
     }
 
     public String getId() {
-        return id;
+        return this.id;
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public void setId(String id) {

@@ -17,7 +17,6 @@ package com.example;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -26,18 +25,16 @@ import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reactor.core.publisher.Computations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 public class FluxFeaturesTests {
 
     private static Logger log = LoggerFactory.getLogger(FluxFeaturesTests.class);
 
     private static List<String> COLORS = Arrays.asList("red", "white", "blue");
-
-    private Random random = new Random();
 
     private Flux<String> flux;
 
@@ -111,7 +108,7 @@ public class FluxFeaturesTests {
 
     @Test
     public void parallel() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase()).subscribeOn(Computations.parallel()).useCapacity(2)
+        this.flux.log().map(value -> value.toUpperCase()).subscribeOn(Schedulers.parallel()).useCapacity(2)
                 .subscribe();
         // Logs the subscription, requests 2 at a time, all elements and finally
         // completion.
@@ -120,7 +117,7 @@ public class FluxFeaturesTests {
 
     @Test
     public void concurrent() throws Exception {
-        Scheduler scheduler = Computations.parallel();
+        Scheduler scheduler = Schedulers.parallel();
         this.flux.log().flatMap(value -> Mono.just(value.toUpperCase()).subscribeOn(scheduler), 2).subscribe(value -> {
             log.info("Consumed: " + value);
         });
@@ -131,8 +128,8 @@ public class FluxFeaturesTests {
 
     @Test
     public void publish() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase()).subscribeOn(Computations.parallel("sub"))
-                .publishOn(Computations.parallel("pub"), 2).subscribe(value -> {
+        this.flux.log().map(value -> value.toUpperCase()).subscribeOn(Schedulers.newParallel("sub"))
+                .publishOn(Schedulers.newParallel("pub"), 2).subscribe(value -> {
                     log.info("Consumed: " + value);
                 });
         // Logs the consumed messages in a separate thread.

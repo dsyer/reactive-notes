@@ -40,7 +40,7 @@ Flux.range(1, 10)
 <3> subscribe to the slow publisher on a background thread
 <4> concurrency hint in flatMap
 
-The `scheduler` is declared separately as a shared field: `Scheduler scheduler = Computations.parallel("sub")`.
+The `scheduler` is declared separately as a shared field: `Scheduler scheduler = Schedulers.parallel()`.
 
 === Embedding in a Non-Reactive Server
 
@@ -64,10 +64,10 @@ If you read the Javadocs for `@RequestMapping` you will find that a method can r
 The scatter-gather with a background thread is a useful pattern but it isn't perfect -- it's not blocking the caller, but it's blocking something, so it's just moving the problem around. There are some practical implications. We have an HTTP server with (probably) non-blocking IO handlers, passing work back to a thread pool, one HTTP request per thread -- all of this is happening inside a servlet container (e.g. Tomcat). The request is processed asynchronously, so the worker thread in Tomcat isn't blocked, and the thread pool that we created in our "scheduler" is processing on up to 4 concurrent threads. We are processing 10 back end requests (calls to `block()`) so there is a maximum, theoretical benefit of using the scheduler of 4 times lower latency. In other words, if processing all 10 requests one after the other in a single thread takes 2000ms, we might see a processing time of 500ms for a single incoming request at our HTTP service. We should emphasise the "might" though: it's only going to go that fast if there is no contention for the processing threads (in both stages, the Tomcat workers, and the application scheduler). If you have very low concurrency, i.e. a small number of clients connecting to your application, and hardly any chance that two will make a request at the same time, then you will probably see close to the theoretical improvement. As soon as there are multiple clients trying to connect, they will all be competing for the same 4 threads, and the latency will drift up, and could even be worse than that experienced by a single client with no background processing. We can improve the latency for concurrent clients by creating the scheduler with a larger thread pool, e.g.
 
 ```java
-    private Scheduler scheduler = Computations.parallel("sub", 64, 16);
+    private Scheduler scheduler = Schedulers.newParallel("sub", 16);
 ```
 
-(16 threads and a buffer of 64 items waiting to be processed.) Now we are using more memory for the threads and their stacks, and we can expect to see lower latency for low concurrency, but not necessarily for high concurrency if our hardware has fewer than 16 cores. We also do not expect higher throughput under load: if there is contention for the threads, there is a high cost for managing those resources and that has to be reflected somwehere in a metric that matters. If you are interested in more detailed analysis of that kind of trade off, some detailed analyses of how performance metrics scale under load can be found in a blog series by https://robharrop.github.io/[Rob Harrop].
+(16 threads.) Now we are using more memory for the threads and their stacks, and we can expect to see lower latency for low concurrency, but not necessarily for high concurrency if our hardware has fewer than 16 cores. We also do not expect higher throughput under load: if there is contention for the threads, there is a high cost for managing those resources and that has to be reflected somwehere in a metric that matters. If you are interested in more detailed analysis of that kind of trade off, some detailed analyses of how performance metrics scale under load can be found in a blog series by https://robharrop.github.io/[Rob Harrop].
 
 == Reactive all the Way Down
 

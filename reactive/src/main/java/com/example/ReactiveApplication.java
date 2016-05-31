@@ -33,10 +33,10 @@ import org.springframework.web.client.reactive.HttpRequestBuilders;
 import org.springframework.web.client.reactive.WebClient;
 import org.springframework.web.client.reactive.WebResponseExtractors;
 
-import reactor.core.publisher.Computations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 @SpringBootApplication
 @RestController
@@ -50,7 +50,7 @@ public class ReactiveApplication {
     @RequestMapping("/parallel")
     public Mono<Result> parallel() {
         log.info("Handling /parallel");
-        Scheduler scheduler = Computations.parallel();
+        Scheduler scheduler = Schedulers.parallel();
         return Flux.range(1, 10) // <1>
                 .log() //
                 .flatMap( // <2>
@@ -75,7 +75,7 @@ public class ReactiveApplication {
 
     @RequestMapping("/serial")
     public Mono<Result> serial() {
-        Scheduler scheduler = Computations.parallel();
+        Scheduler scheduler = Schedulers.parallel();
         log.info("Handling /serial");
         return Flux.range(1, 10) // <1>
                 .log() //

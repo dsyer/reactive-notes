@@ -30,10 +30,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
-import reactor.core.publisher.Computations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 @SpringBootApplication
 @RestController
@@ -41,7 +41,7 @@ public class DemoApplication {
 
     private static Logger log = LoggerFactory.getLogger(DemoApplication.class);
     private RestTemplate restTemplate = new RestTemplate();
-    private Scheduler scheduler = Computations.parallel("sub", 64, 16);
+    private Scheduler scheduler = Schedulers.newParallel("sub", 16);
 
     @RequestMapping("/parallel")
     public CompletableFuture<Result> parallel() {

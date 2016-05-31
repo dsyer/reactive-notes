@@ -29,10 +29,10 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import reactor.core.publisher.Computations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 public class ScatterGatherTests {
 
@@ -44,10 +44,10 @@ public class ScatterGatherTests {
 
     @Test
     public void subscribe() throws Exception {
-        Scheduler scheduler = Computations.parallel();
+        Scheduler scheduler = Schedulers.parallel();
         System.err.println( //
                 Flux.range(1, 10) //
-                        .map(i -> COLORS.get(random.nextInt(3))) //
+                        .map(i -> COLORS.get(this.random.nextInt(3))) //
                         .log() //
                         .flatMap(value -> Mono.fromCallable(() -> {
                             Thread.sleep(1000L);
@@ -63,9 +63,9 @@ public class ScatterGatherTests {
     public void subscribeWithBackgroundPublisherExtractedToMethod() throws Exception {
         System.err.println( //
                 Flux.range(1, 10)//
-                        .map(i -> COLORS.get(random.nextInt(3))) //
+                        .map(i -> COLORS.get(this.random.nextInt(3))) //
                         .log() //
-                        .flatMap(background(Computations.parallel()), 4) //
+                        .flatMap(background(Schedulers.parallel()), 4) //
                         .collect(Result::new, Result::add) //
                         .doOnNext(Result::stop) //
                         .get() //
@@ -75,18 +75,18 @@ public class ScatterGatherTests {
     @Test
     public void publish() throws Exception {
         Result result = new Result();
-        System.err.println(Flux.range(1, 10).map(i -> COLORS.get(random.nextInt(3))).log().doOnNext(value -> {
+        System.err.println(Flux.range(1, 10).map(i -> COLORS.get(this.random.nextInt(3))).log().doOnNext(value -> {
             log.info("Next: " + value);
             sleep(1000L);
             result.add(value);
-        }).doOnComplete(() -> result.stop()).subscribeOn(Computations.parallel("sub"))
-                .publishOn(Computations.parallel("pub"), 4).then().then(Mono.just(result)).get());
+        }).doOnComplete(() -> result.stop()).subscribeOn(Schedulers.newParallel("sub"))
+                .publishOn(Schedulers.newParallel("pub"), 4).then().then(Mono.just(result)).get());
     }
 
     @Test
     public void just() throws Exception {
-        Scheduler scheduler = Computations.parallel();
-        System.err.println(Flux.range(1, 10).map(i -> COLORS.get(random.nextInt(3))).log()
+        Scheduler scheduler = Schedulers.parallel();
+        System.err.println(Flux.range(1, 10).map(i -> COLORS.get(this.random.nextInt(3))).log()
                 .flatMap(value -> Mono.just(value.toUpperCase()).subscribeOn(scheduler), 2)
                 .collect(Result::new, Result::add).doOnNext(Result::stop).get());
     }
@@ -118,26 +118,26 @@ class Result {
     private long duration;
 
     public long add(String colour) {
-        AtomicLong value = counts.getOrDefault(colour, new AtomicLong());
-        counts.putIfAbsent(colour, value);
+        AtomicLong value = this.counts.getOrDefault(colour, new AtomicLong());
+        this.counts.putIfAbsent(colour, value);
         return value.incrementAndGet();
     }
 
     public void stop() {
-        this.duration = System.currentTimeMillis() - timestamp;
+        this.duration = System.currentTimeMillis() - this.timestamp;
     }
 
     public long getDuration() {
-        return duration;
+        return this.duration;
     }
 
     public Map<String, AtomicLong> getCounts() {
-        return counts;
+        return this.counts;
     }
 
     @Override
     public String toString() {
-        return "Result [duration=" + duration + ", counts=" + counts + "]";
+        return "Result [duration=" + this.duration + ", counts=" + this.counts + "]";
     }
 
 }

@@ -224,7 +224,7 @@ An interesting feature of all the logs above is that they are all on the "main" 
 Flux.just("red", "white", "blue");
   .log()
   .map(String::toUpperCase)
-  .subscribeOn(Executors.parallel())
+  .subscribeOn(Schedulers.parallel())
 .useCapacity(2)
 .subscribe()
 ```
@@ -243,10 +243,10 @@ the result can be seen in the output:
 
 TIP: if you write this code yourself, or copy-paste it, remember to wait for the processing to stop before the JVM exits.
 
-Note that the subscription, and all the processing, takes place on a background thread "parallel-1-1" -- this is because we asked for the subscriber to our main `Flux` to be on a single background thread. This is fine (but pointless being in a background thread, in point of fact) if the item processing is CPU intensive. You might also want to be able to perform item processing that is I/O intensive and possibly blocking. In this case, you would be adapting an underlying blocking API, and you just want to get it done as quickly as possible without blocking the caller. A thread pool is still your friend, and that's what you get from `Executors.parallel()`. To switch the processing of the individual items to separate threads (up to the limit of the pool) we need to break them out into separate publishers, and for each of those publishers ask. One way to do this is with an operator called `flatMap()`, which maps the items to a `Publisher` (potentially of a different type), and then back to a sequence of the new type:
+Note that the subscription, and all the processing, takes place on a background thread "parallel-1-1" -- this is because we asked for the subscriber to our main `Flux` to be on a single background thread. This is fine (but pointless being in a background thread, in point of fact) if the item processing is CPU intensive. You might also want to be able to perform item processing that is I/O intensive and possibly blocking. In this case, you would be adapting an underlying blocking API, and you just want to get it done as quickly as possible without blocking the caller. A thread pool is still your friend, and that's what you get from `Schedulers.parallel()`. To switch the processing of the individual items to separate threads (up to the limit of the pool) we need to break them out into separate publishers, and for each of those publishers ask. One way to do this is with an operator called `flatMap()`, which maps the items to a `Publisher` (potentially of a different type), and then back to a sequence of the new type:
 
 ```java
-Scheduler scheduler = Executors.parallel();
+Scheduler scheduler = Schedulers.parallel();
 Flux.just("red", "white", "blue");
   .log()
   .flatMap(value -> 
@@ -258,7 +258,7 @@ Flux.just("red", "white", "blue");
 })
 ```
 
-There are 2 important things to note here. First is the shared `Scheduler`, which is to avoid `Executors.parallel()` being called multiple times, since it is nested in a callback. And second is the use of `flatMap()` to push the items down into a "child" publisher, where we can control the subscription. Reactor has built in default behaviour to hang onto a single thread as long as possible, so we need to be explicit if we want it to process specific items or groups of items in a background thread. This is one of a handful of recognized tricks for forcing parallel processing (see the https://github.com/reactor/reactive-streams-commons/issues/21(Reactive Gems) issue for more detail).
+There are 2 important things to note here. First is the shared `Scheduler`, which is to avoid `Schedulers.parallel()` being called multiple times, since it is nested in a callback. And second is the use of `flatMap()` to push the items down into a "child" publisher, where we can control the subscription. Reactor has built in default behaviour to hang onto a single thread as long as possible, so we need to be explicit if we want it to process specific items or groups of items in a background thread. This is one of a handful of recognized tricks for forcing parallel processing (see the https://github.com/reactor/reactive-streams-commons/issues/21(Reactive Gems) issue for more detail).
 
 The output looks like this:
 
@@ -279,16 +279,14 @@ Notice that there are now multiple threads consuming the items, and the concurre
 
 TIP: Three items ("red", "white", "blue") might be too few to convincingly see more than one background thread, so we need to generate a bit more data. You could do that with a random number generator, for instance.
 
-TODO: Replace `Computations` with `Executors` (API change in Reactor 2.5.0.M3).
-
 `Flux` also has a `publishOn()` method which is the same, but for the listeners (i.e. `onNext()` or consumer callbacks) instead of for the subscriber itself:
 
 ```java
 Flux.just("red", "white", "blue");
   .log()
   .map(String::toUpperCase)
-  .subscribeOn(Computations.parallel("sub"))
-  .publishOn(Executors.parallel("pub"), 2)
+  .subscribeOn(Schedulers.newParallel("sub"))
+  .publishOn(Schedulers.newParallel("pub"), 2)
 .subscribe(value -> {
     log.info("Consumed: " + value);
 });
