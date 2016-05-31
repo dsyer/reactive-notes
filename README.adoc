@@ -10,7 +10,7 @@ include::flux.adoc[leveloffset=+1]
 
 include::io.adoc[leveloffset=+1]
 
-== Server Platform Comparison
+== Appendix: Server Platform Comparison
 
 include::platform.adoc[leveloffset=+1]
 
