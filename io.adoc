@@ -145,7 +145,7 @@ private Mono<HttpStatus> fetch(int value) {
 }
 ```
 
-Note that the `WebClient.perform()` has a Reactive return type, which we have transformed into a `Mono<HttpStatus>`, but we have not subscribed to it. We want the framework to do all the subscribing, so now we are Reactive all the way down.
+Note that the `WebClient.perform()` (or the `WebResponseExtractor` to be precise) has a Reactive return type, which we have transformed into a `Mono<HttpStatus>`, but we have not subscribed to it. We want the framework to do all the subscribing, so now we are Reactive all the way down.
 
 WARNING: Methods in Spring Reactive that return a `Publisher` *are* non-blocking, but in general a method that returns a `Publisher` (or `Flux`, `Mono` or `Observable`) is only a hint that it might be non-blocking. If you are writing such methods it is important to analyse (and preferably test) whether they block, and to let callers know explicitly if they might do.
 
