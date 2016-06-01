@@ -22,7 +22,6 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.8</java.version>
 		<reactor.version>2.5.0.BUILD-SNAPSHOT</reactor.version>
-		<netty.version>4.1.0.Final</netty.version>
 	</properties>
 
 	<dependencies>
@@ -33,11 +32,6 @@
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.netty</groupId>
-			<artifactId>netty-all</artifactId>
-			<version>${netty.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.projectreactor</groupId>

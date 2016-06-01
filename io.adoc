@@ -170,9 +170,9 @@ This code is a lot cleaner than when we had to bridge to the blocking client, wh
 
 Remember the same application code runs on Tomcat, Jetty or Netty. Currently, the Tomcat and Jetty support is provided on top of Servlet 3.1 asynchronous processing, so it is limited to one request per thread. When the same code runs on the Netty server platform that constraint is lifted, and the server can dispatch requests sympathetically to the web client. As long as the client doesn't block, everyone is happy. Performance metrics for the netty server and client probably show similar characteristics, but the Netty server is not restricted to processing a single request per thread, so it doesn't use a large thread pool and we might expect to see some differences in resource utilization. We will come back to that later in another article in this series.
 
-TIP: in the {github}[sample code] the "reactive" sample has Maven profiles "tomcat", "tomcatNext" (for Tomcat 8.5, has to be enabled *with* "tomcat"), "jetty" and "netty", so you can easily try out all the different server options without changing a line of code.
+TIP: in the {github}[sample code] the "reactive" sample has Maven profiles "tomcat", "tomcatNext" (for Tomcat 8.5), "jetty" and "netty", so you can easily try out all the different server options without changing a line of code.
 
-NOTE: the blocking code in many applications is not HTTP backend calls, but database interactions. Very few databases support non-blocking clients at this point in time (MongoDB and Counchbase are notable exceptions, but even those are not as mature as the HTTP clients). Thread pools and the blocking-to-reactive pattern will have a long life until all the database vendors catch up on the client side.
+NOTE: the blocking code in many applications is not HTTP backend calls, but database interactions. Very few databases support non-blocking clients at this point in time (MongoDB and Couchbase are notable exceptions, but even those are not as mature as the HTTP clients). Thread pools and the blocking-to-reactive pattern will have a long life until all the database vendors catch up on the client side.
 
 === Still No Free Lunch
 

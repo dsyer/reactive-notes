@@ -22,7 +22,6 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.8</java.version>
 		<reactor.version>2.5.0.BUILD-SNAPSHOT</reactor.version>
-		<netty.version>4.1.0.Final</netty.version>
 		<jetty.version>9.3.9.v20160517</jetty.version>
 	</properties>
 
@@ -59,6 +58,14 @@
 			<properties>
 				<tomcat.version>8.5.2</tomcat.version>
 			</properties>
+			<dependencies>
+				<dependency>
+					<!-- github: bclozel/spring-boot-reactive-web -->
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-reactive-web</artifactId>
+					<version>0.0.1-SNAPSHOT</version>
+				</dependency>
+			</dependencies>
 		</profile>
 		<profile>
 			<id>netty</id>
@@ -77,12 +84,8 @@
 				</dependency>
 				<dependency>
 					<groupId>io.projectreactor</groupId>
-					<artifactId>reactor-net</artifactId>
-				</dependency>
-				<dependency>
-					<groupId>io.netty</groupId>
-					<artifactId>netty-all</artifactId>
-					<version>${netty.version}</version>
+					<artifactId>reactor-netty</artifactId>
+					<version>${reactor.version}</version>
 				</dependency>
 			</dependencies>
 		</profile>
