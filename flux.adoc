@@ -246,19 +246,18 @@ TIP: if you write this code yourself, or copy-paste it, remember to wait for the
 Note that the subscription, and all the processing, takes place on a background thread "parallel-1-1" -- this is because we asked for the subscriber to our main `Flux` to be on a single background thread. This is fine (but pointless being in a background thread, in point of fact) if the item processing is CPU intensive. You might also want to be able to perform item processing that is I/O intensive and possibly blocking. In this case, you would be adapting an underlying blocking API, and you just want to get it done as quickly as possible without blocking the caller. A thread pool is still your friend, and that's what you get from `Schedulers.parallel()`. To switch the processing of the individual items to separate threads (up to the limit of the pool) we need to break them out into separate publishers, and for each of those publishers ask. One way to do this is with an operator called `flatMap()`, which maps the items to a `Publisher` (potentially of a different type), and then back to a sequence of the new type:
 
 ```java
-Scheduler scheduler = Schedulers.parallel();
 Flux.just("red", "white", "blue");
   .log()
   .flatMap(value -> 
-    Mono.just(value.toUpperCase())
-      .subscribeOn(scheduler),
-    2)
+     Mono.just(value.toUpperCase())
+       .subscribeOn(Schedulers.parallel()),
+     2)
 .subscribe(value -> {
   log.info("Consumed: " + value);
 })
 ```
 
-There are 2 important things to note here. First is the shared `Scheduler`, which is to avoid `Schedulers.parallel()` being called multiple times, since it is nested in a callback. And second is the use of `flatMap()` to push the items down into a "child" publisher, where we can control the subscription. Reactor has built in default behaviour to hang onto a single thread as long as possible, so we need to be explicit if we want it to process specific items or groups of items in a background thread. This is one of a handful of recognized tricks for forcing parallel processing (see the https://github.com/reactor/reactive-streams-commons/issues/21(Reactive Gems) issue for more detail).
+Note here the use of `flatMap()` to push the items down into a "child" publisher, where we can control the subscription. Reactor has built in default behaviour to hang onto a single thread as long as possible, so we need to be explicit if we want it to process specific items or groups of items in a background thread. This is one of a handful of recognized tricks for forcing parallel processing (see the https://github.com/reactor/reactive-streams-commons/issues/21(Reactive Gems) issue for more detail).
 
 The output looks like this:
 
@@ -275,7 +274,7 @@ The output looks like this:
 15:24:36.617 [parallel-2-1] INFO com.example.FluxFeaturesTests - Consumed: WHITE
 ```
 
-Notice that there are now multiple threads consuming the items, and the concurrency hint in the `flatMap()` ensures that there are 2 items being processed at any given time, as long as they are available. We see `request(1)` a lot because the system is trying to keep 2 items in the pipeline, and generally they don't finish processing at the same time, so it only ever needs one more to top up to the desired concurrency.
+Notice that there are now multiple threads consuming the items, and the concurrency hint in the `flatMap()` ensures that there are 2 items being processed at any given time, as long as they are available. We see `request(1)` a lot because the system is trying to keep 2 items in the pipeline, and generally they don't finish processing at the same time, so it only ever needs one more to top up to the desired concurrency. Reactor tries to be very smart here in fact, and it pre-fetches items from the upstream `Publisher` to try to eliminate waiting time for the subscriber (we aren't seeing that here because the numbers are low -- we are only processing 3 items).
 
 TIP: Three items ("red", "white", "blue") might be too few to convincingly see more than one background thread, so we need to generate a bit more data. You could do that with a random number generator, for instance.
 
