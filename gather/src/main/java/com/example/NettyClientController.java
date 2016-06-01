@@ -41,7 +41,7 @@ public class NettyClientController {
                 .flatMap(value -> fetch(value)) //
                 .collect(Result::new, Result::add) //
                 .doOnSuccess(Result::stop) //
-                .toCompletableFuture();
+                .toFuture();
     }
 
     private Mono<HttpStatus> fetch(int value) {

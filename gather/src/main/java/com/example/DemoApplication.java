@@ -54,7 +54,7 @@ public class DemoApplication {
                         4) // <5>
                 .collect(Result::new, Result::add) // <6>
                 .doOnSuccess(Result::stop ) // <7>
-                .toCompletableFuture();
+                .toFuture();
 
         // <1> make 10 calls
         // <2> drop down to a new publisher to process in parallel
@@ -76,7 +76,7 @@ public class DemoApplication {
                 .collect(Result::new, Result::add) // <4>
                 .subscribeOn(this.scheduler) // <6>
                 .doOnSuccess(Result::stop) // <5>
-                .toCompletableFuture();
+                .toFuture();
         // <1> make 10 calls
         // <2> stay in the same publisher chain
         // <3> blocking call not deferred (no point in this case)

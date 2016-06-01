@@ -53,7 +53,7 @@ public CompletableFuture<Result> parallel() {
     return Flux.range(1, 10)
       ...
       .doOnSuccess(Result::stop)
-      .toCompletableFuture();
+      .toFuture();
 }
 ```
 

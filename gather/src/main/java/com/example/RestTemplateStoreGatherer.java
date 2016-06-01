@@ -51,7 +51,7 @@ public class RestTemplateStoreGatherer {
                 .flatMap(store -> Mono.fromCallable(() -> meta(store)).subscribeOn(scheduler), 4) // <3>
                 .take(50) // <4>
                 .asList() // <5>
-                .toCompletableFuture();
+                .toFuture();
     }
 
     // <1> an "infinite" sequence sine we don't know how many pages there are
