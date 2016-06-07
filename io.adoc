@@ -71,6 +71,9 @@ The scatter-gather with a background thread is a useful pattern but it isn't per
 
 TIP: Tomcat allocates 100 threads for processing HTTP requests by default. That is excessive if we know all the processing is going to be on our scheduler thread pool. There is an impedance mismatch: the scheduler thread pool can be a bottleneck because it has fewer threads than the upstream Tomcat thread pool. This highlights the fact that performance tuning can be very hard, and, while you might have control of all the configuration, it's a delicate balance.
 
+We can do better than a fixed thread pool if we use a scheduler that adjusts its capacity according to demand. Reactor has a convenience for that, so if you try the same code with `Schedulers.elastic()` (you can call it anywhere; there is only one instance), you will see that under load more threads are created.
+
+
 == Reactive all the Way Down
 
 The bridge from blocking to reactive is a useful pattern, and is easy to implement using available technology in Spring MVC (as shown above). The next stage in the Reactive journey is to break out of blocking in application threads completely, and to do that requires new APIs and new tools. Ultimately we have to be Reactive all the way down the stack, including servers and clients. This is the goal of Spring Reactive, which is a new framework, orthogonal to Spring MVC, but meeting the same needs, and using a similar programming model.
@@ -186,7 +189,7 @@ Another source of pain is that if we ever make a mistake and block in one of our
 
 == Conclusion
 
-It's nice to be able to control all the moving parts in our asynchronous processing: every layer has a thread pool size and a queue. But at some point it becomes a burden, and we start looking for something simpler, or leaner. Analysis of scalability leads to the conclusion that it is often better to shed the extra threads, and work with the constraints imposed by the physical hardware. This is an example of "mechanical sympathy", as is famously exploited by LMAX to great effect in the https://lmax-exchange.github.io/disruptor/[Disruptor Pattern].
+It's nice to be able to control all the moving parts in our asynchronous processing: every layer has a thread pool size and a queue. We can make some of those layers elastic, and try and adjust them according to how much work they do. But at some point it becomes a burden, and we start looking for something simpler, or leaner. Analysis of scalability leads to the conclusion that it is often better to shed the extra threads, and work with the constraints imposed by the physical hardware. This is an example of "mechanical sympathy", as is famously exploited by LMAX to great effect in the https://lmax-exchange.github.io/disruptor/[Disruptor Pattern].
 
 We have begun to see the power of the Reactive approach, but remember that with power comes responsibility. It's radical, and it's fundamental. It's "rip it up and start again" territory. So you will also hopefully appreciate that Reactive isn't a solution to all problems. In fact it isn't a solution to any problem, it merely facilitates the solution of a certain class of problems. The benefits you get from using it might be outweighed by the costs of learning it, modifying your APIs to be Reactive all the way down, and maintaining the code afterwards, so tread carefully.
 
