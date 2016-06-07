@@ -45,12 +45,12 @@ public class RestTemplateStoreGatherer {
 
     @RequestMapping
     public CompletableFuture<List<Store>> gather() {
-        Scheduler scheduler = Schedulers.parallel();
+        Scheduler scheduler = Schedulers.elastic();
         return Flux.range(0, Integer.MAX_VALUE) // <1>
                 .flatMap(page -> Flux.defer(() -> page(page)).subscribeOn(scheduler), 2) // <2>
                 .flatMap(store -> Mono.fromCallable(() -> meta(store)).subscribeOn(scheduler), 4) // <3>
                 .take(50) // <4>
-                .asList() // <5>
+                .collectList() // <5>
                 .toFuture();
     }
 

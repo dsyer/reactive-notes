@@ -41,7 +41,7 @@ public class DemoApplication {
 
     private static Logger log = LoggerFactory.getLogger(DemoApplication.class);
     private RestTemplate restTemplate = new RestTemplate();
-    private Scheduler scheduler = Schedulers.newParallel("sub", 16);
+    private Scheduler scheduler = Schedulers.elastic();
 
     @RequestMapping("/parallel")
     public CompletableFuture<Result> parallel() {
