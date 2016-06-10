@@ -44,7 +44,7 @@ We just generated a `Flux`, and now we can do stuff with it. There are actually 
 
 === Single Valued Sequences
 
-Often you encounter a sequence that you know has only one or zero elements, for example a repository method that finds an entity by its id. Reactor has a `Mono` type representing a single valued or empty `Flux`. `Mono` has a very similar API to `Flux` but more focused because not all operators make sense for single-valued sequences. RxJava also has a bolt on (in version 1.x) called `Single`, and also `Completable` for an empty sequence.
+Often you encounter a sequence that you know has only one or zero elements, for example a repository method that finds an entity by its id. Reactor has a `Mono` type representing a single valued or empty `Flux`. `Mono` has a very similar API to `Flux` but more focused because not all operators make sense for single-valued sequences. RxJava also has a bolt on (in version 1.x) called `Single`, and also `Completable` for an empty sequence. The empty sequence in Reactor is `Mono<Void>`.
 
 === Operators
 
