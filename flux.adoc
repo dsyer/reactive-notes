@@ -74,7 +74,7 @@ Stream<String> upper = stream.map(value -> {
 });
 ```
 
-The observation we made about `Flux` applies here: no data is processed, it's just a plan of execution. There are, however, some important differences between `Flux` and `Stream` though, which make `Stream` an inappropriate API for Reactive use cases. `Flux` has a lot more operators, much of which is just convenience, but the real difference comes when you want to consume the data, so that's what we need to look at next.
+The observation we made about `Flux` applies here: no data is processed, it's just a plan of execution. There are, however, some important differences between `Flux` and `Stream`, which make `Stream` an inappropriate API for Reactive use cases. `Flux` has a lot more operators, much of which is just convenience, but the real difference comes when you want to consume the data, so that's what we need to look at next.
 
 TIP: There is a useful blog by Sebastien Deleuze on https://spring.io/blog/2016/04/19/understanding-reactive-types[Reactive Types], where he describes the differences between the various streaming and reactive APIs by looking at the types they define, and how you would use them. The differences between `Flux` and `Stream` are highlighted there in more detail.
 
@@ -102,7 +102,7 @@ The output is:
 09:17:59.667 [main] INFO reactor.core.publisher.FluxLog -  onComplete()
 ```
 
-So we can see from this that the effect of `subscribe()` without an argument, is to request the publisher to send _all_ data -- there's only one `request()` logged and it's "unbounded". We can also see callbacks for each item that is published (`onNext()`), for the end of the sequence (`onComplete()`), and for the original subscription (`onSubscribe()`). If you needed to you could listen for those events yourself using the `doOn*()` methods in `Flux` (which are themselves operators, not subscribers, so they don't cause any data to flow on their own).
+So we can see from this that the effect of `subscribe()` without an argument, is to request the publisher to send _all_ data -- there's only one `request()` logged and it's "unbounded". We can also see callbacks for each item that is published (`onNext()`), for the end of the sequence (`onComplete()`), and for the original subscription (`onSubscribe()`). If you needed to you could listen for those events yourself using the `doOn*()` methods in `Flux`, which are themselves operators, not subscribers, so they don't cause any data to flow on their own.
 
 The `subscribe()` method is overloaded, and the other variants give you different options to control what happens. One important and convenient form is `subscribe()` with callbacks as arguments. The first argument is a `Consumer`, which gives you a callback with each of the items, and you can also optionally add a `Consumer` for an error if there is one, and a vanilla `Runnable` to execute when the sequence is complete. For example, just with the per-item callback:
 
@@ -127,7 +127,7 @@ BLUE
 09:56:12.682 [main] INFO reactor.core.publisher.FluxLog -  onComplete()
 ```
 
-We could control the flow of data, and make it "bounded", in a variety of ways. The raw API for controlling it is the `Subscription` you get from a `Subscriber`. The equivalent long form of the short call to `subscribe()` above is:
+We could control the flow of data, and make it "bounded", in a variety of ways. The raw API for control is the `Subscription` you get from a `Subscriber`. The equivalent long form of the short call to `subscribe()` above is:
 
 ```java
 .subscribe(new Subscriber<String>() {
@@ -137,13 +137,14 @@ We could control the flow of data, and make it "bounded", in a variety of ways. 
         s.request(Long.MAX_VALUE);
     }
     @Override
-        public void onNext(String t) {
+    public void onNext(String t) {
+        System.out.println(t);
     }
     @Override
-        public void onError(Throwable t) {
+    public void onError(Throwable t) {
     }
     @Override
-        public void onComplete() {
+    public void onComplete() {
     }
 
 });
@@ -174,7 +175,7 @@ To control the flow, e.g. to consume at most 2 items at a time, you could use th
 ...
 ```
 
-This `Subscriber` is "batching" items 2 at a time. It's a common use case so you might want to extract the implementation to a convenience class, and that would make the code more readable too. The output looks like this:
+This `Subscriber` is "batching" items 2 at a time. It's a common use case so you might think about extracting the implementation to a convenience class, and that would make the code more readable too. The output looks like this:
 
 ```
 09:47:13.562 [main] INFO reactor.core.publisher.FluxLog -  onSubscribe(reactor.core.publisher.FluxArray$ArraySubscription@61832929)
@@ -198,7 +199,7 @@ Flux.just("red", "white", "blue");
 .subscribe()
 ```
 
-(note the call to `useCapacity()` before the subscription). The output:
+(note the call to `useCapacity()` before the subscription). Here's the output:
 
 ```
 10:25:43.739 [main] INFO reactor.core.publisher.FluxLog -  onSubscribe(reactor.core.publisher.FluxArray$ArraySubscription@4667ae56)
@@ -241,7 +242,7 @@ the result can be seen in the output:
 
 TIP: if you write this code yourself, or copy-paste it, remember to wait for the processing to stop before the JVM exits.
 
-Note that the subscription, and all the processing, takes place on a background thread "parallel-1-1" -- this is because we asked for the subscriber to our main `Flux` to be on a single background thread. This is fine (but pointless being in a background thread, in point of fact) if the item processing is CPU intensive. You might also want to be able to perform item processing that is I/O intensive and possibly blocking. In this case, you would be adapting an underlying blocking API, and you just want to get it done as quickly as possible without blocking the caller. A thread pool is still your friend, and that's what you get from `Schedulers.parallel()`. To switch the processing of the individual items to separate threads (up to the limit of the pool) we need to break them out into separate publishers, and for each of those publishers ask. One way to do this is with an operator called `flatMap()`, which maps the items to a `Publisher` (potentially of a different type), and then back to a sequence of the new type:
+Note that the subscription, and all the processing, takes place on a single background thread "parallel-1-1" -- this is because we asked for the subscriber to our main `Flux` to be in the background. This is fine if the item processing is CPU intensive (but pointless being in a background thread, in point of fact, since you pay for the context switch but don't get the results any faster). You might also want to be able to perform item processing that is I/O intensive and possibly blocking. In this case, you would want to get it done as quickly as possible without blocking the caller. A thread pool is still your friend, and that's what you get from `Schedulers.parallel()`. To switch the processing of the individual items to separate threads (up to the limit of the pool) we need to break them out into separate publishers, and for each of those publishers ask for the result in a background thread. One way to do this is with an operator called `flatMap()`, which maps the items to a `Publisher` (potentially of a different type), and then back to a sequence of the new type:
 
 ```java
 Flux.just("red", "white", "blue");
@@ -255,7 +256,7 @@ Flux.just("red", "white", "blue");
 })
 ```
 
-Note here the use of `flatMap()` to push the items down into a "child" publisher, where we can control the subscription. Reactor has built in default behaviour to hang onto a single thread as long as possible, so we need to be explicit if we want it to process specific items or groups of items in a background thread. This is one of a handful of recognized tricks for forcing parallel processing (see the https://github.com/reactor/reactive-streams-commons/issues/21(Reactive Gems) issue for more detail).
+Note here the use of `flatMap()` to push the items down into a "child" publisher, where we can control the subscription per item instead of for the whole sequence. Reactor has built in default behaviour to hang onto a single thread as long as possible, so we need to be explicit if we want it to process specific items or groups of items in a background thread. Actually, this is one of a handful of recognized tricks for forcing parallel processing (see the https://github.com/reactor/reactive-streams-commons/issues/21(Reactive Gems) issue for more detail).
 
 The output looks like this:
 
@@ -272,9 +273,9 @@ The output looks like this:
 15:24:36.617 [parallel-2-1] INFO com.example.FluxFeaturesTests - Consumed: WHITE
 ```
 
-Notice that there are now multiple threads consuming the items, and the concurrency hint in the `flatMap()` ensures that there are 2 items being processed at any given time, as long as they are available. We see `request(1)` a lot because the system is trying to keep 2 items in the pipeline, and generally they don't finish processing at the same time, so it only ever needs one more to top up to the desired concurrency. Reactor tries to be very smart here in fact, and it pre-fetches items from the upstream `Publisher` to try to eliminate waiting time for the subscriber (we aren't seeing that here because the numbers are low -- we are only processing 3 items).
+Notice that there are now multiple threads consuming the items, and the concurrency hint in the `flatMap()` ensures that there are 2 items being processed at any given time, as long as they are available. We see `request(1)` a lot because the system is trying to keep 2 items in the pipeline, and generally they don't finish processing at the same time. Reactor tries to be very smart here in fact, and it pre-fetches items from the upstream `Publisher` to try to eliminate waiting time for the subscriber (we aren't seeing that here because the numbers are low -- we are only processing 3 items).
 
-TIP: Three items ("red", "white", "blue") might be too few to convincingly see more than one background thread, so we need to generate a bit more data. You could do that with a random number generator, for instance.
+TIP: Three items ("red", "white", "blue") might be too few to convincingly see more than one background thread, so it might be better to generate more data. You could do that with a random number generator, for instance.
 
 `Flux` also has a `publishOn()` method which is the same, but for the listeners (i.e. `onNext()` or consumer callbacks) instead of for the subscriber itself:
 
@@ -306,11 +307,11 @@ The output looks like this:
 
 Notice that the consumer callbacks (logging "Consumed: ...") are on the publisher thread `pub-1-1`. If you take out the `subscribeOn()` call, you might see all of the 2nd chunk of data processed on the `pub-1-1` thread as well. This, again, is Reactor being frugal with threads -- if there's no explicit request to switch threads it stays on the same one for the next call, whatever that is.
 
-NOTE: We switched in this sample from `useCapacity(2)` to adding a `prefetch=2` to the `publishOn()`. The configurers are only hints, and sometimes they conflict with each other, and Reactor has to choose one over the other. This is a case where the `useCapacity()` hint would have been ignored.
+NOTE: We changed the code in this sample from `useCapacity(2)` to adding a `prefetch=2` to the `publishOn()`. The configurers are only hints, and sometimes they conflict with each other, and Reactor has to choose one over the other. This is a case where the `useCapacity()` hint would have been ignored.
 
 === Extractors: The Subscribers from the Dark Side
 
-There is another way to subscribe to a sequence, which is to call `Mono.block()` or `Mono.toFuture()` or `Flux.toStream()` (these are the "extractor" methods -- they get you out of the Reactive types into a less flexible, blocking abstraction). `Flux` also has converters `asList()` and `asMap()` that convert from `Flux` to `Mono`. They don't actually subscribe to the sequence, but they do throw away any control you might have had over the suscription at the level of the individual items.
+There is another way to subscribe to a sequence, which is to call `Mono.block()` or `Mono.toFuture()` or `Flux.toStream()` (these are the "extractor" methods -- they get you out of the Reactive types into a less flexible, blocking abstraction). `Flux` also has converters `collectToList()` and `collectToMap()` that convert from `Flux` to `Mono`. They don't actually subscribe to the sequence, but they do throw away any control you might have had over the suscription at the level of the individual items.
 
 WARNING: A good rule of thumb is "**never call an extractor**". There are some exceptions (otherwise the methods would not exist). One notable exception is in tests because it's useful to be able to block to allow results to accumulate.
 
@@ -318,5 +319,5 @@ These methods are there as an escape hatch to bridge from Reactive to blocking; 
 
 == Conclusion
 
-In this article we have covered the basics of the Reactive Streams and Reactor APIs. If you need to know more there are plenty of places to look, but there's no substitute for hands on coding, so use the code in {github}[GitHub] or head over to the https://github.com/reactor/lite-rx-api-hands-on[Lite RX Hands On] workshop if you need a place to start. So far, really this is just overhead, and we haven't learned much that we couldn't have done in a more obvious way using non-Reactive tools. The next article in the series will dig a little deeper into the blocking, dispatching and asynchronous sides of the Reactive model, and show you what opportunities there are to reap the real benefits of the whole approach.
+In this article we have covered the basics of the Reactive Streams and Reactor APIs. If you need to know more there are plenty of places to look, but there's no substitute for hands on coding, so use the code in {github}[GitHub] or head over to the https://github.com/reactor/lite-rx-api-hands-on[Lite RX Hands On] workshop if you need a place to start. So far, really this is just overhead, and we haven't learned much that we couldn't have done in a more obvious way using non-Reactive tools. The next article in the series will dig a little deeper into the blocking, dispatching and asynchronous sides of the Reactive model, and show you what opportunities there are to reap the real benefits.
 
