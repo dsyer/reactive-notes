@@ -32,7 +32,7 @@ repositories {
 
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter')
-	compile('io.projectreactor:reactor-core:2.5.0.BUILD-SNAPSHOT')
+	compile('io.projectreactor:reactor-core:2.5.0.M4')
 	testCompile('org.springframework.boot:spring-boot-starter-test') 
 }
 
