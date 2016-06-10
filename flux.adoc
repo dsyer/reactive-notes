@@ -24,8 +24,6 @@ With Gradle it's very similar:
     compile 'io.projectreactor:reactor-core:2.5.0.M4'
 ```
 
-TODO: update reactor version to stable release
-
 Now let's write some code.
 
 == What Makes it Functional?
