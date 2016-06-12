@@ -311,7 +311,7 @@ NOTE: We changed the code in this sample from `useCapacity(2)` to adding a `pref
 
 === Extractors: The Subscribers from the Dark Side
 
-There is another way to subscribe to a sequence, which is to call `Mono.block()` or `Mono.toFuture()` or `Flux.toStream()` (these are the "extractor" methods -- they get you out of the Reactive types into a less flexible, blocking abstraction). `Flux` also has converters `collectToList()` and `collectToMap()` that convert from `Flux` to `Mono`. They don't actually subscribe to the sequence, but they do throw away any control you might have had over the suscription at the level of the individual items.
+There is another way to subscribe to a sequence, which is to call `Mono.block()` or `Mono.toFuture()` or `Flux.toStream()` (these are the "extractor" methods -- they get you out of the Reactive types into a less flexible, blocking abstraction). `Flux` also has converters `collectList()` and `collectMap()` that convert from `Flux` to `Mono`. They don't actually subscribe to the sequence, but they do throw away any control you might have had over the suscription at the level of the individual items.
 
 WARNING: A good rule of thumb is "**never call an extractor**". There are some exceptions (otherwise the methods would not exist). One notable exception is in tests because it's useful to be able to block to allow results to accumulate.
 
