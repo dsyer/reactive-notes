@@ -1,6 +1,6 @@
 :github: https://github.com/dsyer/reactive-notes
 :master: {github}/blob/master
-:parti: {master}/intro.adoc
+:parti: https://spring.io/blog/2016/06/07/notes-on-reactive-programming-part-i-the-reactive-landscape
 
 In this article we continue the series on {parti}[Reactive Programming], and we concentrate on explaining some concepts through actual code samples. The end result should be that you understand a bit better what makes Reactive different, and what makes it functional. The examples here are quite abstract, but they give you a way to think about the APIs and the programming style, and start to get a feel for how it is different. We will see the elements of Reactive, and learn how to control the flow of data, and process in background threads if necessary.
 
@@ -319,5 +319,5 @@ These methods are there as an escape hatch to bridge from Reactive to blocking; 
 
 == Conclusion
 
-In this article we have covered the basics of the Reactive Streams and Reactor APIs. If you need to know more there are plenty of places to look, but there's no substitute for hands on coding, so use the code in {github}[GitHub] or head over to the https://github.com/reactor/lite-rx-api-hands-on[Lite RX Hands On] workshop if you need a place to start. So far, really this is just overhead, and we haven't learned much that we couldn't have done in a more obvious way using non-Reactive tools. The next article in the series will dig a little deeper into the blocking, dispatching and asynchronous sides of the Reactive model, and show you what opportunities there are to reap the real benefits.
+In this article we have covered the basics of the Reactive Streams and Reactor APIs. If you need to know more there are plenty of places to look, but there's no substitute for hands on coding, so use the code in {github}[GitHub] (for this article in tests in the project called "flux"), or head over to the https://github.com/reactor/lite-rx-api-hands-on[Lite RX Hands On] workshop. So far, really this is just overhead, and we haven't learned much that we couldn't have done in a more obvious way using non-Reactive tools. The next article in the series will dig a little deeper into the blocking, dispatching and asynchronous sides of the Reactive model, and show you what opportunities there are to reap the real benefits.
 
