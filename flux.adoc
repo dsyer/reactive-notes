@@ -256,7 +256,7 @@ Flux.just("red", "white", "blue")
 })
 ```
 
-Note here the use of `flatMap()` to push the items down into a "child" publisher, where we can control the subscription per item instead of for the whole sequence. Reactor has built in default behaviour to hang onto a single thread as long as possible, so we need to be explicit if we want it to process specific items or groups of items in a background thread. Actually, this is one of a handful of recognized tricks for forcing parallel processing (see the https://github.com/reactor/reactive-streams-commons/issues/21(Reactive Gems) issue for more detail).
+Note here the use of `flatMap()` to push the items down into a "child" publisher, where we can control the subscription per item instead of for the whole sequence. Reactor has built in default behaviour to hang onto a single thread as long as possible, so we need to be explicit if we want it to process specific items or groups of items in a background thread. Actually, this is one of a handful of recognized tricks for forcing parallel processing (see the https://github.com/reactor/reactive-streams-commons/issues/21[Reactive Gems] issue for more detail).
 
 The output looks like this:
 

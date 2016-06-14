@@ -80,7 +80,7 @@ http://www.reactive-streams.org/[Reactive Streams]
 
 Blog from RxJava lead http://akarnokd.blogspot.co.uk/[David Karnok] including the one on http://akarnokd.blogspot.co.uk/2016/03/operator-fusion-part-1.html[Generations of Reactive]
 
-https://github.com/reactor/reactive-streams-commons/issues/21(Reactive Gems) github issue with documentation of lots of use cases
+https://github.com/reactor/reactive-streams-commons/issues/21[Reactive Gems] github issue with documentation of lots of use cases
 
 https://en.wikipedia.org/wiki/Continuation(which you can think of as state)[Continuation - Wikipedia]
 
