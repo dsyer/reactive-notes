@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,10 +38,14 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
-@RestController("/stores")
+@RestController
+@RequestMapping("/stores")
 public class RestTemplateStoreGatherer {
 
-    private static Logger log = LoggerFactory.getLogger(RestTemplateStoreGatherer.class);
+	@Value("${app.url:http://stores.cfapps.io}")
+	private String url = "http://stores.cfapps.io";
+
+	private static Logger log = LoggerFactory.getLogger(RestTemplateStoreGatherer.class);
     private RestTemplate restTemplate = new RestTemplate();
 
     @RequestMapping
@@ -68,7 +73,7 @@ public class RestTemplateStoreGatherer {
      * @return the enhanced store
      */
     private Store meta(Store store) {
-        Map<String, Object> map = this.restTemplate.exchange("http://stores.cfapps.io/stores/{id}", HttpMethod.GET, null,
+        Map<String, Object> map = this.restTemplate.exchange(url + "/stores/{id}", HttpMethod.GET, null,
                 new ParameterizedTypeReference<Map<String, Object>>() {
                 }, store.getId()).getBody();
         @SuppressWarnings("unchecked")
@@ -85,7 +90,7 @@ public class RestTemplateStoreGatherer {
      * @return a page of stores (or empty)
      */
     private Flux<Store> page(int page) {
-        Map<String, Object> map = this.restTemplate.exchange("http://stores.cfapps.io/stores?page={page}", HttpMethod.GET,
+        Map<String, Object> map = this.restTemplate.exchange(url + "/stores?page={page}", HttpMethod.GET,
                 null, new ParameterizedTypeReference<Map<String, Object>>() {
                 }, page).getBody();
         @SuppressWarnings("unchecked")

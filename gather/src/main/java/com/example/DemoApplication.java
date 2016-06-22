@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.HttpStatus;
@@ -38,6 +39,9 @@ import reactor.core.scheduler.Schedulers;
 @SpringBootApplication
 @RestController
 public class DemoApplication {
+	
+	@Value("${app.url:http://example.com}")
+	private String url = "http://example.com";
 
     private static Logger log = LoggerFactory.getLogger(DemoApplication.class);
     private RestTemplate restTemplate = new RestTemplate();
@@ -86,7 +90,7 @@ public class DemoApplication {
     }
 
     private HttpStatus block(int value) {
-        return this.restTemplate.getForEntity("http://example.com", String.class, value).getStatusCode();
+        return this.restTemplate.getForEntity(url, String.class, value).getStatusCode();
     }
 
     public static void main(String[] args) {

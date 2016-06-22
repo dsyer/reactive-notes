@@ -19,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,7 +31,10 @@ import reactor.io.netty.http.HttpClient;
 @RestController
 public class NettyClientController {
 
-    private static Logger log = LoggerFactory.getLogger(NettyClientController.class);
+	@Value("${app.url:http://example.com}")
+	private String url = "http://example.com";
+
+	private static Logger log = LoggerFactory.getLogger(NettyClientController.class);
     private HttpClient client = HttpClient.create();
 
     @RequestMapping("/netty")
@@ -45,7 +49,7 @@ public class NettyClientController {
     }
 
     private Mono<HttpStatus> fetch(int value) {
-        return this.client.get("http://example.com")
+        return this.client.get(url)
                 .map(inbound -> HttpStatus.valueOf(inbound.status().code()));
     }
 }

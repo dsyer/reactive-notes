@@ -1,0 +1,262 @@
+= Basic Benchmarks
+
+Here are some not very scientific, basic benchmarks done over a local
+network with a commodity WiFi router. The server is running on a 4
+core i7 with Ubuntu 14.04 and OpenJDK 1.8 (it's mostly I/O bound
+though, so hopefully the bulk of the latency is actually caused by
+backend calls to teh internet). The load test client is on the same
+type of hardware.
+
+== Blocking Client
+
+With Spring MVC
+
+```java
+@RequestMapping("/parallel")
+public CompletableFuture<Result> parallel() {
+    return Flux.range(1, 10) // <1>
+            .log() //
+            .flatMap( // <2>
+                    value -> Mono.fromCallable(() -> block(value)) // <3>
+                            .subscribeOn(this.scheduler), // <4>
+                    4) // <5>
+            .collect(Result::new, Result::add) // <6>
+            .doOnSuccess(Result::stop ) // <7>
+            .toFuture();
+}
+```
+<1> make 10 calls
+<2> drop down to a new publisher to process in parallel
+<3> blocking code here inside a Callable to defer execution
+<4> subscribe to the slow publisher on a background thread
+<5> concurrency hint in flatMap
+<6> collect results and aggregate into a single object
+<7> at the end stop the clock
+
+```
+$ ab -c 4 -n 600 http://server:8080/parallel
+```
+
+Tomcat 8.0.33 and Spring MVC
+
+```
+Requests per second:    3.67 [#/sec] (mean)
+Time per request:       1090.976 [ms] (mean)
+Time per request:       272.744 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.68 [Kbytes/sec] received
+...
+Percentage of the requests served within a certain time (ms)
+  50%    777
+  66%    797
+  75%    816
+  80%    832
+  90%   1013
+  95%   1262
+  98%   3109
+  99%  15798
+ 100%  30223 (longest request)
+```
+
+== Blocking Client with No Parallel Processing
+
+```java
+    @RequestMapping("/serial")
+    public CompletableFuture<Result> serial() {
+        return Flux.range(1, 10) // <1>
+                .log() //
+                .map( // <2>
+                        value -> block(value)) // <3>
+                .collect(Result::new, Result::add) // <4>
+                .subscribeOn(this.scheduler) // <6>
+                .doOnSuccess(Result::stop) // <5>
+                .toFuture();
+    }
+```
+<1> make 10 calls
+<2> stay in the same publisher chain
+<3> blocking call not deferred (no point in this case)
+<4> collect results and aggregate into a single object
+<5> at the end stop the clock
+<6> subscribe on a background thread
+
+Result:
+
+```
+Requests per second:    1.61 [#/sec] (mean)
+Time per request:       2487.547 [ms] (mean)
+Time per request:       621.887 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.29 [Kbytes/sec] received
+...
+Percentage of the requests served within a certain time (ms)
+  50%   2365
+  66%   2429
+  75%   2521
+  80%   2564
+  90%   2708
+  95%   3243
+  98%   3692
+  99%   3920
+ 100%   4490 (longest request)
+```
+
+== Spring Reactive Blocking Client
+
+```java
+@RequestMapping("/parallel")
+public Mono<Result> parallel() {
+    return Flux.range(1, 10) // <1>
+            .log() //
+            .flatMap( // <2>
+                    value -> Mono.fromCallable(() -> block(value)) // <3>
+                            .subscribeOn(scheduler), // <4>
+                    4) // <5>
+            .collect(Result::new, Result::add) // <6>
+            .doOnSuccess(Result::stop); // <7>
+
+}
+```
+<1> make 10 calls
+<2> drop down to a new publisher to process in parallel
+<3> blocking code here inside a Callable to defer execution
+<4> subscribe to the slow publisher on a background thread
+<5> concurrency hint in flatMap
+<6> collect results and aggregate into a single object
+<7> at the end stop the clock
+
+
+Tomcat 8.0.33:
+
+```
+Percentage of the requests served within a certain time (ms)
+  50%    424
+  66%    491
+  75%    508
+  80%    520
+  90%    552
+  95%    611
+  98%    651
+  99%    701
+ 100%   1135 (longest request)
+```
+
+Tomcat 8.5.2:
+
+```
+Percentage of the requests served within a certain time (ms)
+  50%    415
+  66%    493
+  75%    509
+  80%    519
+  90%    583
+  95%    682
+  98%    843
+  99%    973
+ 100%   1058 (longest request)
+```
+
+Reactor IO (Netty) server:
+
+```
+Requests per second:    7.68 [#/sec] (mean)
+Time per request:       520.663 [ms] (mean)
+Time per request:       130.166 [ms] (mean, across all concurrent requests)
+Transfer rate:          1.04 [Kbytes/sec] received
+...
+Percentage of the requests served within a certain time (ms)
+  50%    475
+  66%    525
+  75%    573
+  80%    601
+  90%    687
+  95%    858
+  98%   1236
+  99%   1296
+ 100%   1439 (longest request)
+```
+
+== Spring Reactive Non-Blocking Client
+
+```java
+@RequestMapping("/netty")
+public Mono<Result> netty() {
+    return Flux.range(1, 10) // <1>
+            .log() //
+            .flatMap(this::fetch) // <2>
+            .collect(Result::new, Result::add)
+            .doOnSuccess(Result::stop); // <3>
+}
+```
+<1> make 10 calls
+<2> drop down to a new publisher to process in parallel
+<3> at the end stop the clock
+
+Reactor IO (Netty) server:
+
+```
+Percentage of the requests served within a certain time (ms)
+  50%    552
+  66%    576
+  75%    593
+  80%    601
+  90%    625
+  95%    658
+  98%    700
+  99%    728
+ 100%    764 (longest request)
+```
+
+Tomcat 8.0.33
+
+```
+Requests per second:    9.68 [#/sec] (mean)
+Time per request:       413.040 [ms] (mean)
+Time per request:       103.260 [ms] (mean, across all concurrent requests)
+Transfer rate:          1.92 [Kbytes/sec] received
+...
+Percentage of the requests served within a certain time (ms)
+  50%    287
+  66%    302
+  75%    317
+  80%    334
+  90%    839
+  95%   1313
+  98%   1620
+  99%   1855
+ 100%   2017 (longest request)
+```
+
+== Spring MVC Non-Blocking Client
+
+```java
+@RequestMapping("/netty")
+public CompletableFuture<Result> gather() {
+    return Flux.range(1, 10) // <1>
+            .log() //
+            .flatMap(value -> fetch(value)) // <2>
+            .collect(Result::new, Result::add) //
+            .doOnSuccess(Result::stop) //
+            .toFuture();
+}
+```
+<1> Make 10 calls
+<2> Drop down to a new publisher, but this time non-blocking
+
+Result:
+
+```
+Requests per second:    4.75 [#/sec] (mean)
+Time per request:       842.030 [ms] (mean)
+Time per request:       210.508 [ms] (mean, across all concurrent requests)
+Transfer rate:          1.07 [Kbytes/sec] received
+...
+Percentage of the requests served within a certain time (ms)
+  50%    335
+  66%    469
+  75%    669
+  80%   1339
+  90%   1632
+  95%   1837
+  98%   3494
+  99%   7468
+ 100%  30098 (longest request)
+```

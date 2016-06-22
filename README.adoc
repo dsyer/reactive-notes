@@ -12,7 +12,7 @@ include::io.adoc[leveloffset=+1]
 
 == Appendix: Server Platform Comparison
 
-include::platform.adoc[leveloffset=+1]
+include::benchmarks.adoc[leveloffset=+1]
 
 TODO: more chat to tidy up
 
