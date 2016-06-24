@@ -42,10 +42,10 @@ import reactor.core.scheduler.Schedulers;
 @RequestMapping("/stores")
 public class RestTemplateStoreGatherer {
 
-	@Value("${app.url:http://stores.cfapps.io}")
-	private String url = "http://stores.cfapps.io";
+    @Value("${app.url:http://stores.cfapps.io}")
+    private String url = "http://stores.cfapps.io";
 
-	private static Logger log = LoggerFactory.getLogger(RestTemplateStoreGatherer.class);
+    private static Logger log = LoggerFactory.getLogger(RestTemplateStoreGatherer.class);
     private RestTemplate restTemplate = new RestTemplate();
 
     @RequestMapping
@@ -53,7 +53,8 @@ public class RestTemplateStoreGatherer {
         Scheduler scheduler = Schedulers.elastic();
         return Flux.range(0, Integer.MAX_VALUE) // <1>
                 .flatMap(page -> Flux.defer(() -> page(page)).subscribeOn(scheduler), 2) // <2>
-                .flatMap(store -> Mono.fromCallable(() -> meta(store)).subscribeOn(scheduler), 4) // <3>
+                .flatMap(store -> Mono.fromCallable(() -> meta(store))
+                        .subscribeOn(scheduler), 4) // <3>
                 .take(50) // <4>
                 .collectList() // <5>
                 .toFuture();
@@ -61,21 +62,23 @@ public class RestTemplateStoreGatherer {
 
     // <1> an "infinite" sequence sine we don't know how many pages there are
     // <2> drop to a background thread to process each page, 2 at a time
-    // <3> for each store drop to a background thread to enhance it with metadata, 4 at a time
+    // <3> for each store drop to a background thread to enhance it with metadata, 4 at a
+    // time
     // <4> take at most 50
     // <5> convert to a list
 
     /**
      * Enhance a Store with some metadata. Blocking.
      *
-     * @param store
-     *            a Store to enhance
+     * @param store a Store to enhance
      * @return the enhanced store
      */
     private Store meta(Store store) {
-        Map<String, Object> map = this.restTemplate.exchange(url + "/stores/{id}", HttpMethod.GET, null,
-                new ParameterizedTypeReference<Map<String, Object>>() {
-                }, store.getId()).getBody();
+        Map<String, Object> map = this.restTemplate
+                .exchange(url + "/stores/{id}", HttpMethod.GET, null,
+                        new ParameterizedTypeReference<Map<String, Object>>() {
+                        }, store.getId())
+                .getBody();
         @SuppressWarnings("unchecked")
         Map<String, Object> meta = (Map<String, Object>) map.get("address");
         store.getMeta().putAll(meta);
@@ -85,17 +88,18 @@ public class RestTemplateStoreGatherer {
     /**
      * Get a page of stores from the backend, Blocking.
      *
-     * @param page
-     *            the page number (starting at 0)
+     * @param page the page number (starting at 0)
      * @return a page of stores (or empty)
      */
     private Flux<Store> page(int page) {
-        Map<String, Object> map = this.restTemplate.exchange(url + "/stores?page={page}", HttpMethod.GET,
-                null, new ParameterizedTypeReference<Map<String, Object>>() {
-                }, page).getBody();
+        Map<String, Object> map = this.restTemplate
+                .exchange(url + "/stores?page={page}", HttpMethod.GET, null,
+                        new ParameterizedTypeReference<Map<String, Object>>() {
+                        }, page)
+                .getBody();
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> list = (List<Map<String, Object>>) ((Map<String, Object>) map.get("_embedded"))
-                .get("stores");
+        List<Map<String, Object>> list = (List<Map<String, Object>>) ((Map<String, Object>) map
+                .get("_embedded")).get("stores");
         List<Store> stores = new ArrayList<>();
         for (Map<String, Object> store : list) {
             stores.add(new Store((String) store.get("id"), (String) store.get("name")));

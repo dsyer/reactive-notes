@@ -39,9 +39,9 @@ import reactor.core.scheduler.Schedulers;
 @SpringBootApplication
 @RestController
 public class DemoApplication {
-	
-	@Value("${app.url:http://example.com}")
-	private String url = "http://example.com";
+
+    @Value("${app.url:http://example.com}")
+    private String url = "http://example.com";
 
     private static Logger log = LoggerFactory.getLogger(DemoApplication.class);
     private RestTemplate restTemplate = new RestTemplate();
@@ -57,7 +57,7 @@ public class DemoApplication {
                                 .subscribeOn(this.scheduler), // <4>
                         4) // <5>
                 .collect(Result::new, Result::add) // <6>
-                .doOnSuccess(Result::stop ) // <7>
+                .doOnSuccess(Result::stop) // <7>
                 .toFuture();
 
         // <1> make 10 calls

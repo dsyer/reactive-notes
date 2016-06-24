@@ -31,10 +31,10 @@ import reactor.io.netty.http.HttpClient;
 @RestController
 public class NettyClientController {
 
-	@Value("${app.url:http://example.com}")
-	private String url = "http://example.com";
+    @Value("${app.url:http://example.com}")
+    private String url = "http://example.com";
 
-	private static Logger log = LoggerFactory.getLogger(NettyClientController.class);
+    private static Logger log = LoggerFactory.getLogger(NettyClientController.class);
     private HttpClient client = HttpClient.create();
 
     @RequestMapping("/netty")
