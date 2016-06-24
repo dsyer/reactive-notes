@@ -22,6 +22,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.8</java.version>
 		<reactor.version>2.5.0.BUILD-SNAPSHOT</reactor.version>
+		<rxnetty.version>0.5.2-SNAPSHOT</rxnetty.version>
+		<netty.version>4.1.1.Final</netty.version>
+		<rxjava.version>1.1.6</rxjava.version>
 	</properties>
 
 	<dependencies>
@@ -34,9 +37,34 @@
 			<artifactId>reactor-core</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-all</artifactId>
+			<version>${netty.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-netty</artifactId>
 			<version>${reactor.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.reactivex</groupId>
+			<artifactId>rxnetty-http</artifactId>
+			<version>${rxnetty.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>netty-handler</artifactId>
+					<groupId>io.netty</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>netty-codec-http</artifactId>
+					<groupId>io.netty</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>io.reactivex</groupId>
+			<artifactId>rxjava</artifactId>
+			<version>${rxjava.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -60,6 +88,14 @@
 			<id>spring-snapshots</id>
 			<name>Spring Snapshots</name>
 			<url>https://repo.spring.io/snapshot</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>jfrog-snapshots</id>
+			<name>JFrog Snapshots</name>
+			<url>https://oss.jfrog.org/libs-snapshot</url>
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>

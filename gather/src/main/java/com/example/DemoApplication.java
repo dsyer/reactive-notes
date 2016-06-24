@@ -94,7 +94,7 @@ public class DemoApplication {
     }
 
     public static void main(String[] args) {
-        System.setProperty("reactor.io.epoll", "false");
+        // System.setProperty("reactor.io.epoll", "false");
         SpringApplication.run(DemoApplication.class, args);
     }
 
