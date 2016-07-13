@@ -101,15 +101,15 @@ public class FluxFeaturesTests {
 
     @Test
     public void batching() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase()).useCapacity(2).subscribe();
+        this.flux.log().map(value -> value.toUpperCase()).subscribe(null, 2);
         // Logs the subscription, requests 2 at a time, all elements and finally
         // completion.
     }
 
     @Test
     public void parallel() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase()).subscribeOn(Schedulers.parallel()).useCapacity(2)
-                .subscribe();
+        this.flux.log().map(value -> value.toUpperCase()).subscribeOn(Schedulers.parallel())
+                .subscribe(null, 2);
         // Logs the subscription, requests 2 at a time, all elements and finally
         // completion.
         Thread.sleep(500L);

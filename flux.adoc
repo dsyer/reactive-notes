@@ -14,14 +14,14 @@ To get started grab a blank project from https://start.spring.io and add the Rea
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-core</artifactId>
-			<version>2.5.0.M4</version>
+			<version>3.0.0.BUILD-SNAPSHOT</version>
 		</dependency>
 ```
 
 With Gradle it's very similar:
 
 ```java
-    compile 'io.projectreactor:reactor-core:2.5.0.M4'
+    compile 'io.projectreactor:reactor-core:3.0.0.BUILD-SNAPSHOT'
 ```
 
 Now let's write some code.
@@ -40,7 +40,7 @@ A `Flux` is a publisher of a sequence of events of a specific POJO type, so it i
 Flux<String> flux = Flux.just("red", "white", "blue");
 ```
 
-We just generated a `Flux`, and now we can do stuff with it. There are actually only three things you can do with it: operate on it (transform it, or combine it with other sequences), subscribe to it (it's a publisher), or configure it (modify the behaviour of subscribers).
+We just generated a `Flux`, and now we can do stuff with it. There are actually only two things you can do with it: operate on it (transform it, or combine it with other sequences), subscribe to it (it's a publisher).
 
 === Single Valued Sequences
 
@@ -187,19 +187,16 @@ This `Subscriber` is "batching" items 2 at a time. It's a common use case so you
 09:47:13.565 [main] INFO reactor.core.publisher.FluxLog -  onComplete()
 ```
 
-=== Configurers
-
-In fact the batching subscriber is such a common use case that there are convenience methods already available in `Flux`. They fall into the category of "configurers", operating on the `Flux` itself and not on the data. Generally a configurer modifies the behaviour of subscribers before they are added. The batching example above can be implemented like this:
+In fact the batching subscriber is such a common use case that there are convenience methods already available in `Flux`. The batching example above can be implemented like this:
 
 ```java
 Flux.just("red", "white", "blue")
   .log()
   .map(value -> value.toUpperCase())
-  .useCapacity(2)
-.subscribe();
+.subscribe(null, 2);
 ```
 
-(note the call to `useCapacity()` before the subscription). Here's the output:
+(note the call to `subscribe()` with a request limit). Here's the output:
 
 ```
 10:25:43.739 [main] INFO reactor.core.publisher.FluxLog -  onSubscribe(reactor.core.publisher.FluxArray$ArraySubscription@4667ae56)
@@ -211,21 +208,20 @@ Flux.just("red", "white", "blue")
 10:25:43.741 [main] INFO reactor.core.publisher.FluxLog -  onComplete()
 ```
 
-TIP: A library that will process sequences for you, like Spring Reactive Web, can handle the configuration concerns, as well as the subscriptions. It's good to be able to push these concerns down the stack because it saves you from cluttering your code with non-business logic, making it more readable and easier to test and maintain. So as a rule, it is a good thing if you can **avoid calling configurers**, or at least push that code into a processing layer, and out of the business logic.
+TIP: A library that will process sequences for you, like Spring Reactive Web, can handle the subscriptions. It's good to be able to push these concerns down the stack because it saves you from cluttering your code with non-business logic, making it more readable and easier to test and maintain. So as a rule, it is a good thing if you can **avoid subscribing** to a sequence, or at least push that code into a processing layer, and out of the business logic.
 
 === Threads, Schedulers and Background Processing
 
 An interesting feature of all the logs above is that they are all on the "main" thread, which is the thread of the caller to `subscribe()`. This highlights an important point: Reactor is extremely frugal with threads, because that gives you the greatest chance of the best possible performance. That might be a surprising statement if you've been wrangling threads and thread pools and asynchronous executions for the last 5 years, trying to squeeze more juice out of your services. But it's true: in the absence of any imperative to switch threads, even if the JVM is optimized to handle threads very efficiently, it is always faster to do computation on a single thread. Reactor has handed you the keys to control all the asynchronous processing, and it assumes you know what you are doing.
 
-`Flux` provides a few configurer methods that control the thread boundaries inside the eventual subscriber. For example, you can configure the subscriptions to be handled in a background thread using `Flux.subscribeOn()`:
+`Flux` provides a few configurer methods that control the thread boundaries. For example, you can configure the subscriptions to be handled in a background thread using `Flux.subscribeOn()`:
 
 ```java
 Flux.just("red", "white", "blue")
   .log()
   .map(String::toUpperCase)
   .subscribeOn(Schedulers.parallel())
-.useCapacity(2)
-.subscribe();
+.subscribe(null, 2);
 ```
 
 the result can be seen in the output:
@@ -307,7 +303,7 @@ The output looks like this:
 
 Notice that the consumer callbacks (logging "Consumed: ...") are on the publisher thread `pub-1-1`. If you take out the `subscribeOn()` call, you might see all of the 2nd chunk of data processed on the `pub-1-1` thread as well. This, again, is Reactor being frugal with threads -- if there's no explicit request to switch threads it stays on the same one for the next call, whatever that is.
 
-NOTE: We changed the code in this sample from `useCapacity(2)` to adding a `prefetch=2` to the `publishOn()`. The configurers are only hints, and sometimes they conflict with each other, and Reactor has to choose one over the other. This is a case where the `useCapacity()` hint would have been ignored.
+NOTE: We changed the code in this sample from `subscribe(null, 2)` to adding a `prefetch=2` to the `publishOn()`. In this case the fetch size hint in `subscribe()` would have been ignored.
 
 === Extractors: The Subscribers from the Dark Side
 
