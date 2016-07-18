@@ -22,8 +22,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
-import reactor.util.Exceptions;
 
 public class MonoFeaturesTests {
     private Mono<String> mono;
