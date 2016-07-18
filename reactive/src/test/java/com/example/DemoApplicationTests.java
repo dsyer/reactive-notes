@@ -36,4 +36,9 @@ public class DemoApplicationTests {
         assertThat(application.parallel().block().getCounts()).isNotNull();
     }
 
+    @Test
+    public void nettyEndpoint() {
+        assertThat(application.netty().block().getCounts()).isNotNull();
+    }
+
 }
