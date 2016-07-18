@@ -26,13 +26,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.client.reactive.ReactorHttpClientRequestFactory;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.client.reactive.HttpRequestBuilders;
+import org.springframework.web.client.reactive.ClientWebRequestBuilders;
+import org.springframework.web.client.reactive.ResponseExtractors;
 import org.springframework.web.client.reactive.WebClient;
-import org.springframework.web.client.reactive.WebResponseExtractors;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -48,7 +48,7 @@ public class ReactiveApplication {
 
 	private static Logger log = LoggerFactory.getLogger(ReactiveApplication.class);
 	private RestTemplate restTemplate = new RestTemplate();
-	private WebClient client = new WebClient(new ReactorHttpClientRequestFactory());
+	private WebClient client = new WebClient(new ReactorClientHttpConnector());
 	private Scheduler scheduler = Schedulers.elastic();
 	// private Scheduler scheduler = Computations.parallel("sub", 16, 40);
 
@@ -113,7 +113,7 @@ public class ReactiveApplication {
 	}
 
 	private Mono<HttpStatus> fetch(int value) {
-		return this.client.perform(HttpRequestBuilders.get(url)).extract(WebResponseExtractors.response(String.class))
+		return this.client.perform(ClientWebRequestBuilders.get(url)).extract(ResponseExtractors.response(String.class))
 				.map(response -> response.getStatusCode());
 	}
 
