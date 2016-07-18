@@ -21,8 +21,10 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.8</java.version>
-		<reactor.version>2.5.0.BUILD-SNAPSHOT</reactor.version>
+		<reactor.version>3.0.0.BUILD-SNAPSHOT</reactor.version>
+		<reactor-io.version>0.5.0.BUILD-SNAPSHOT</reactor-io.version>
 		<jetty.version>9.3.9.v20160517</jetty.version>
+		<spring.version>5.0.0.BUILD-SNAPSHOT</spring.version>
 	</properties>
 
 	<dependencies>
@@ -33,7 +35,7 @@
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-netty</artifactId>
-			<version>${reactor.version}</version>
+			<version>${reactor-io.version}</version>
 		</dependency>
 
 		<dependency>
@@ -52,9 +54,9 @@
 			<dependencies>
 				<dependency>
 					<!-- github: bclozel/spring-boot-reactive-web -->
-					<groupId>org.springframework.boot</groupId>
-					<artifactId>spring-boot-starter-reactive-web</artifactId>
-					<version>0.0.1-SNAPSHOT</version>
+					<groupId>org.springframework.boot.experimental</groupId>
+					<artifactId>spring-boot-starter-web-reactive</artifactId>
+					<version>0.1.0.BUILD-SNAPSHOT</version>
 				</dependency>
 			</dependencies>
 		</profile>
@@ -66,9 +68,9 @@
 			<dependencies>
 				<dependency>
 					<!-- github: bclozel/spring-boot-reactive-web -->
-					<groupId>org.springframework.boot</groupId>
-					<artifactId>spring-boot-starter-reactive-web</artifactId>
-					<version>0.0.1-SNAPSHOT</version>
+					<groupId>org.springframework.boot.experimental</groupId>
+					<artifactId>spring-boot-starter-web-reactive</artifactId>
+					<version>0.1.0.BUILD-SNAPSHOT</version>
 				</dependency>
 			</dependencies>
 		</profile>
@@ -77,9 +79,9 @@
 			<dependencies>
 				<dependency>
 					<!-- github: bclozel/spring-boot-reactive-web -->
-					<groupId>org.springframework.boot</groupId>
-					<artifactId>spring-boot-starter-reactive-web</artifactId>
-					<version>0.0.1-SNAPSHOT</version>
+					<groupId>org.springframework.boot.experimental</groupId>
+					<artifactId>spring-boot-starter-web-reactive</artifactId>
+					<version>0.1.0.BUILD-SNAPSHOT</version>
 					<exclusions>
 						<exclusion>
 							<groupId>org.springframework.boot</groupId>
@@ -98,9 +100,10 @@
 			<id>jetty</id>
 			<dependencies>
 				<dependency>
-					<groupId>org.springframework.boot</groupId>
-					<artifactId>spring-boot-starter-reactive-web</artifactId>
-					<version>0.0.1-SNAPSHOT</version>
+					<!-- github: bclozel/spring-boot-reactive-web -->
+					<groupId>org.springframework.boot.experimental</groupId>
+					<artifactId>spring-boot-starter-web-reactive</artifactId>
+					<version>0.1.0.BUILD-SNAPSHOT</version>
 					<exclusions>
 						<exclusion>
 							<groupId>org.springframework.boot</groupId>
