@@ -80,14 +80,13 @@ The bridge from blocking to reactive is a useful pattern, and is easy to impleme
 
 NOTE: Spring Reactive started as a standalone project, but is folded into the Spring Framework in version 5.0 (first milestone June 2016).
 
-The first step to fully Reactive in our scatter-gather example would be to replace `spring-boot-starter-web` with `spring-boot-starter-reactive-web` on the classpath. In Maven:
+The first step to fully Reactive in our scatter-gather example would be to replace `spring-boot-starter-web` with `spring-boot-starter-web-reactive` on the classpath. In Maven:
 
 ```xml
 <dependency>
-	<!-- github: bclozel/spring-boot-reactive-web -->
-	<groupId>org.springframework.boot</groupId>
-	<artifactId>spring-boot-starter-reactive-web</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<groupId>org.springframework.boot.experimental</groupId>
+	<artifactId>spring-boot-starter-web-reactive</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -101,12 +100,12 @@ repositories {
 
 
 dependencies {
-	compile('org.springframework.boot:spring-boot-starter-reactive-web:0.0.1-SNAPSHOT')
+	compile('org.springframework.boot.experimental:spring-boot-starter-web-reactive:0.1.0-SNAPSHOT')
     ...
 }
 ```
 
-(At the time of writing you need to build and install this starter locally from https://github.com/bclozel/spring-boot-reactive-web[GitHub].)
+(At the time of writing there are snapshots of this experimental library in repo.spring.io, or you could build and install locally from https://github.com/bclozel/spring-boot-reactive-web[GitHub].)
 
 Then in the controller, we can simply lose the bridge to `CompletableFuture` and return an object of type `Mono`:
 
