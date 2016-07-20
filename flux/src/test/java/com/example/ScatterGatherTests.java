@@ -36,108 +36,118 @@ import reactor.core.scheduler.Schedulers;
 
 public class ScatterGatherTests {
 
-    private static Logger log = LoggerFactory.getLogger(ScatterGatherTests.class);
+	private static Logger log = LoggerFactory.getLogger(ScatterGatherTests.class);
 
-    private static List<String> COLORS = Arrays.asList("red", "white", "blue");
+	private static List<String> COLORS = Arrays.asList("red", "white", "blue");
 
-    private Random random = new Random();
+	private Random random = new Random();
 
-    @Test
-    public void subscribe() throws Exception {
-        Scheduler scheduler = Schedulers.parallel();
-        System.err.println( //
-                Flux.range(1, 10) //
-                        .map(i -> COLORS.get(this.random.nextInt(3))) //
-                        .log() //
-                        .flatMap(value -> Mono.fromCallable(() -> {
-                            Thread.sleep(1000L);
-                            return value;
-                        }).subscribeOn(scheduler), 4) //
-                        .collect(Result::new, Result::add) //
-                        .doOnNext(Result::stop) //
-                        .block() //
-        );
-    }
+	@Test
+	public void subscribe() throws Exception {
+		Scheduler scheduler = Schedulers.parallel();
+		System.err.println( //
+				Flux.range(1, 10) //
+						.map(i -> COLORS.get(this.random.nextInt(3))) //
+						.log() //
+						.flatMap(value -> Mono.fromCallable(() -> {
+							Thread.sleep(1000L);
+							return value;
+						}).subscribeOn(scheduler), 4) //
+						.collect(Result::new, Result::add) //
+						.doOnNext(Result::stop) //
+						.block() //
+		);
+	}
 
-    @Test
-    public void subscribeWithBackgroundPublisherExtractedToMethod() throws Exception {
-        System.err.println( //
-                Flux.range(1, 10)//
-                        .map(i -> COLORS.get(this.random.nextInt(3))) //
-                        .log() //
-                        .flatMap(background(Schedulers.parallel()), 4) //
-                        .collect(Result::new, Result::add) //
-                        .doOnNext(Result::stop) //
-                        .block() //
-        );
-    }
+	@Test
+	public void subscribeWithBackgroundPublisherExtractedToMethod() throws Exception {
+		System.err.println( //
+				Flux.range(1, 10)//
+						.map(i -> COLORS.get(this.random.nextInt(3))) //
+						.log() //
+						.flatMap(background(Schedulers.parallel()), 4) //
+						.collect(Result::new, Result::add) //
+						.doOnNext(Result::stop) //
+						.block() //
+		);
+	}
 
-    @Test
-    public void publish() throws Exception {
-        Result result = new Result();
-        System.err.println(Flux.range(1, 10).map(i -> COLORS.get(this.random.nextInt(3))).log().doOnNext(value -> {
-            log.info("Next: " + value);
-            sleep(1000L);
-            result.add(value);
-        }).doOnComplete(() -> result.stop()).subscribeOn(Schedulers.newParallel("sub"))
-                .publishOn(Schedulers.newParallel("pub"), 4).then().then(Mono.just(result)).block());
-    }
+	@Test
+	public void publish() throws Exception {
+		System.err.println(Flux.range(1, 10) //
+				.map(i -> COLORS.get(this.random.nextInt(3))) //
+				.log().doOnNext(value -> {
+					log.info("Next: " + value);
+					sleep(1000L);
+				}) //
+				.subscribeOn(Schedulers.newParallel("sub")) //
+				.publishOn(Schedulers.newParallel("pub"), 4) //
+				.collect(Result::new, Result::add) //
+				.doOnNext(Result::stop) //
+				.block() //
+		);
+	}
 
-    @Test
-    public void just() throws Exception {
-        Scheduler scheduler = Schedulers.parallel();
-        System.err.println(Flux.range(1, 10).map(i -> COLORS.get(this.random.nextInt(3))).log()
-                .flatMap(value -> Mono.just(value.toUpperCase()).subscribeOn(scheduler), 2)
-                .collect(Result::new, Result::add).doOnNext(Result::stop).block());
-    }
+	@Test
+	public void just() throws Exception {
+		Scheduler scheduler = Schedulers.parallel();
+		System.err.println(Flux.range(1, 10) //
+				.map(i -> COLORS.get(this.random.nextInt(3))) //
+				.log() //
+				.flatMap(value -> Mono.just(value.toUpperCase()).subscribeOn(scheduler), 2) //
+				.collect(Result::new, Result::add) //
+				.doOnNext(Result::stop) //
+				.block() //
+		);
+	}
 
-    private Function<? super String, ? extends Publisher<? extends String>> background(Scheduler scheduler) {
-        return value -> Mono.fromCallable(() -> {
-            Thread.sleep(1000L);
-            return value;
-        }).subscribeOn(scheduler);
-    }
+	private Function<? super String, ? extends Publisher<? extends String>> background(Scheduler scheduler) {
+		return value -> Mono.fromCallable(() -> {
+			Thread.sleep(1000L);
+			return value;
+		}).subscribeOn(scheduler);
+	}
 
-    private void sleep(long duration) {
-        try {
-            Thread.sleep(duration);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Interrupted");
-        }
-    }
+	private void sleep(long duration) {
+		try {
+			Thread.sleep(duration);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException("Interrupted");
+		}
+	}
 
 }
 
 class Result {
 
-    private ConcurrentMap<String, AtomicLong> counts = new ConcurrentHashMap<>();
+	private ConcurrentMap<String, AtomicLong> counts = new ConcurrentHashMap<>();
 
-    private long timestamp = System.currentTimeMillis();
+	private long timestamp = System.currentTimeMillis();
 
-    private long duration;
+	private long duration;
 
-    public long add(String colour) {
-        AtomicLong value = this.counts.getOrDefault(colour, new AtomicLong());
-        this.counts.putIfAbsent(colour, value);
-        return value.incrementAndGet();
-    }
+	public long add(String colour) {
+		AtomicLong value = this.counts.getOrDefault(colour, new AtomicLong());
+		this.counts.putIfAbsent(colour, value);
+		return value.incrementAndGet();
+	}
 
-    public void stop() {
-        this.duration = System.currentTimeMillis() - this.timestamp;
-    }
+	public void stop() {
+		this.duration = System.currentTimeMillis() - this.timestamp;
+	}
 
-    public long getDuration() {
-        return this.duration;
-    }
+	public long getDuration() {
+		return this.duration;
+	}
 
-    public Map<String, AtomicLong> getCounts() {
-        return this.counts;
-    }
+	public Map<String, AtomicLong> getCounts() {
+		return this.counts;
+	}
 
-    @Override
-    public String toString() {
-        return "Result [duration=" + this.duration + ", counts=" + this.counts + "]";
-    }
+	@Override
+	public String toString() {
+		return "Result [duration=" + this.duration + ", counts=" + this.counts + "]";
+	}
 
 }
