@@ -57,7 +57,7 @@ Flux<String> flux = Flux.just("red", "white", "blue");
 
 Flux<String> upper = flux
   .log()
-  .map(value -> value.toUpperCase());
+  .map(String::toUpperCase);
 ```
 
 In this code we transformed the strings in the input by converting them to upper case. So far, so trivial.
@@ -87,7 +87,7 @@ Here's a call to `subscribe()` in action:
 ```java
 Flux.just("red", "white", "blue")
   .log()
-  .map(value -> value.toUpperCase())
+  .map(String::toUpperCase)
 .subscribe();
 ```
 
@@ -109,7 +109,7 @@ The `subscribe()` method is overloaded, and the other variants give you differen
 ```java
 Flux.just("red", "white", "blue")
     .log()
-    .map(value -> value.toUpperCase())
+    .map(String::toUpperCase)
 .subscribe(System.out::println);
 ```
 
@@ -192,7 +192,7 @@ In fact the batching subscriber is such a common use case that there are conveni
 ```java
 Flux.just("red", "white", "blue")
   .log()
-  .map(value -> value.toUpperCase())
+  .map(String::toUpperCase)
 .subscribe(null, 2);
 ```
 

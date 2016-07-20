@@ -46,20 +46,20 @@ public class FluxFeaturesTests {
 
     @Test
     public void operate() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase());
+        this.flux.log().map(String::toUpperCase);
         // Nothing happened. No logs, nothing.
     }
 
     @Test
     public void subscribe() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase()).subscribe();
+        this.flux.log().map(String::toUpperCase).subscribe();
         // Logs the subscription, an unbounded request, all elements and finally
         // completion.
     }
 
     @Test
     public void consume() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase()).subscribe(System.out::println);
+        this.flux.log().map(String::toUpperCase).subscribe(System.out::println);
         // Same as above but items are printed as they emerge from the end of
         // the operator
         // chain
@@ -67,7 +67,7 @@ public class FluxFeaturesTests {
 
     @Test
     public void subscription() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase()).subscribe(new Subscriber<String>() {
+        this.flux.log().map(String::toUpperCase).subscribe(new Subscriber<String>() {
 
             private long count = 0;
             private Subscription subscription;
@@ -101,14 +101,14 @@ public class FluxFeaturesTests {
 
     @Test
     public void batching() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase()).subscribe(null, 2);
+        this.flux.log().map(String::toUpperCase).subscribe(null, 2);
         // Logs the subscription, requests 2 at a time, all elements and finally
         // completion.
     }
 
     @Test
     public void parallel() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase()).subscribeOn(Schedulers.parallel())
+        this.flux.log().map(String::toUpperCase).subscribeOn(Schedulers.parallel())
                 .subscribe(null, 2);
         // Logs the subscription, requests 2 at a time, all elements and finally
         // completion.
@@ -128,7 +128,7 @@ public class FluxFeaturesTests {
 
     @Test
     public void publish() throws Exception {
-        this.flux.log().map(value -> value.toUpperCase()).subscribeOn(Schedulers.newParallel("sub"))
+        this.flux.log().map(String::toUpperCase).subscribeOn(Schedulers.newParallel("sub"))
                 .publishOn(Schedulers.newParallel("pub"), 2).subscribe(value -> {
                     log.info("Consumed: " + value);
                 });

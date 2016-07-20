@@ -37,13 +37,13 @@ public class MonoFeaturesTests {
 
     @Test
     public void operate() throws Exception {
-        this.mono.log().map(value -> value.toUpperCase());
+        this.mono.log().map(String::toUpperCase);
         // Nothing happened. No logs, nothing.
     }
 
     @Test
     public void subscribe() throws Exception {
-        this.mono.log().map(value -> value.toUpperCase()).subscribe();
+        this.mono.log().map(String::toUpperCase).subscribe();
         // Logs the subscription, an unbounded request, all elements and finally
         // completion.
     }

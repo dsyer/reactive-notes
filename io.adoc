@@ -1,6 +1,6 @@
 :github: https://github.com/dsyer/reactive-notes
 :master: {github}/blob/master
-:partii: {master}/flux.adoc
+:partii: https://spring.io/blog/2016/06/13/notes-on-reactive-programming-part-ii-writing-some-code
 :partiv: {master}/platform.adoc
 
 In this article we continue the series on {partii}[Reactive Programming], and the focus is less on learning the basic APIs and more on more concrete use cases and writing code that actually does something useful. We will see how Reactive is a useful abstraction for concurrent programming, but also that it has some very low level features that we should learn to treat with respect and caution. If we start to use these features to their full potential we can take control of layers in our application that previously were invisible, hidden by containers, platforms and frameworks.
@@ -129,7 +129,6 @@ We still have the blocking backend call in `block()`, so we still have to subscr
 
 ```java
 private RestTemplate restTemplate = new RestTemplate();
-tory());
 
 private HttpStatus block(int value) {
     return this.restTemplate.getForEntity("http://example.com", String.class, value)
@@ -182,7 +181,7 @@ NOTE: the blocking code in many applications is not HTTP backend calls, but data
 
 We have whittled down our basic scatter-gather use case until the code is very clean, and very sympathetic to the hardware it runs on. We wrote some simple code and it was stacked up and orchestrated very nicely into a working HTTP service using Spring. On a sunny day everyone is more than happy with the outcome. But as soon as there are errors, e.g. a badly behaved network connection, or a back end service that suffers from poor latency, we are going to suffer.
 
-The first, most obvious way to suffer is that the code we wrote is declarative, so it's hard to debug. When errors occur the diagnostics can be very opaque. Using the raw, low-level APIs, like Reactor without Spring, or even down to the level of Neytty without Reactor would probably make it even worse, because then we would have to build a lot of error handling ourselves, repeating the boiler plate every time we interact with the network. At least with Spring and Reactor in the mix we can expect to see stack traces logged for stray, uncaught exceptions. They might not be easy to understand though because they happen on threads that we don't control, and they sometimes show up as quite low level concerns, from unfamiliar parts of the stack.
+The first, most obvious way to suffer is that the code we wrote is declarative, so it's hard to debug. When errors occur the diagnostics can be very opaque. Using the raw, low-level APIs, like Reactor without Spring, or even down to the level of Netty without Reactor would probably make it even worse, because then we would have to build a lot of error handling ourselves, repeating the boiler plate every time we interact with the network. At least with Spring and Reactor in the mix we can expect to see stack traces logged for stray, uncaught exceptions. They might not be easy to understand though because they happen on threads that we don't control, and they sometimes show up as quite low level concerns, from unfamiliar parts of the stack.
 
 Another source of pain is that if we ever make a mistake and block in one of our Reactive callbacks, we will be holding up *all* requests on the same thread. With the servlet-based containers every request is isolated to a thread, and blocking doesn't hold up other requests because they are be processed on different threads. Blocking all requests is still a recipe for trouble, but it only shows up as increased latency with roughly a constant factor per request. In the Reactive world, blocking a single request can lead to increased latency for all requests, and blocking all requests can bring a server to its knees because the extra layers of buffers and threads are not there to take up the slack.
 
