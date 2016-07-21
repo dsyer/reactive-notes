@@ -53,20 +53,26 @@ public class DemoApplication {
         return Flux.range(1, 10) // <1>
                 .log() //
                 .flatMap( // <2>
-                        value -> Mono.fromCallable(() -> block(value)) // <3>
-                                .subscribeOn(this.scheduler), // <4>
-                        4) // <5>
-                .collect(Result::new, Result::add) // <6>
-                .doOnSuccess(Result::stop) // <7>
+                        this::fetch, 4 ) // <3>
+                .collect(Result::new, Result::add) // <4>
+                .doOnSuccess(Result::stop) // <5>
                 .toFuture();
 
         // <1> make 10 calls
         // <2> drop down to a new publisher to process in parallel
-        // <3> blocking code here inside a Callable to defer execution
-        // <4> subscribe to the slow publisher on a background thread
-        // <5> concurrency hint in flatMap
-        // <6> collect results and aggregate into a single object
-        // <7> at the end stop the clock
+        // <3> concurrency hint in flatMap
+        // <4> collect results and aggregate into a single object
+        // <5> at the end stop the clock
+
+    }
+    
+    private Mono<HttpStatus> fetch(int value) {
+
+    	return Mono.fromCallable(() -> block(value)) // <1>
+        .subscribeOn(this.scheduler);    	         // <2>
+    	
+    	// <1> blocking code here inside a Callable to defer execution
+        // <2> subscribe to the slow publisher on a background thread
 
     }
 
@@ -76,7 +82,7 @@ public class DemoApplication {
         return Flux.range(1, 10) // <1>
                 .log() //
                 .map( // <2>
-                        value -> block(value)) // <3>
+                        this::block) // <3>
                 .collect(Result::new, Result::add) // <4>
                 .subscribeOn(this.scheduler) // <6>
                 .doOnSuccess(Result::stop) // <5>

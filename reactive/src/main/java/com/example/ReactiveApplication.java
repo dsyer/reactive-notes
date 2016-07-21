@@ -74,14 +74,14 @@ public class ReactiveApplication {
 
 	}
 
-	@RequestMapping("/serial")
+    @RequestMapping("/serial")
 	public Mono<Result> serial() {
 		Scheduler scheduler = Schedulers.parallel();
 		log.info("Handling /serial");
 		return Flux.range(1, 10) // <1>
 				.log() //
 				.map( // <2>
-						value -> block(value)) // <3>
+						this::block) // <3>
 				.collect(Result::new, Result::add) // <4>
 				.doOnSuccess(Result::stop) // <5>
 				.subscribeOn(scheduler); // <6>
