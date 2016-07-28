@@ -33,7 +33,7 @@
 			<artifactId>spring-boot-starter</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>io.projectreactor</groupId>
+			<groupId>io.projectreactor.ipc</groupId>
 			<artifactId>reactor-netty</artifactId>
 			<version>${reactor-io.version}</version>
 		</dependency>
@@ -88,11 +88,6 @@
 							<artifactId>spring-boot-starter-tomcat</artifactId>
 						</exclusion>
 					</exclusions>
-				</dependency>
-				<dependency>
-					<groupId>io.projectreactor</groupId>
-					<artifactId>reactor-netty</artifactId>
-					<version>${reactor-io.version}</version>
 				</dependency>
 			</dependencies>
 		</profile>

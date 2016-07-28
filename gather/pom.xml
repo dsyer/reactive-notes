@@ -35,7 +35,7 @@
 			<artifactId>reactor-core</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>io.projectreactor</groupId>
+			<groupId>io.projectreactor.ipc</groupId>
 			<artifactId>reactor-netty</artifactId>
 			<version>${reactor-io.version}</version>
 		</dependency>

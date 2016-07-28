@@ -15,7 +15,7 @@ Suppose we have a blocking method that returns an `HttpStatus`:
 private RestTemplate restTemplate = new RestTemplate();
 
 private HttpStatus block(int value) {
-    return this.restTemplate.getForEntity("http://example.com", String.class, value)
+    return this.restTemplate.getForEntity("http://example.com/{value}", String.class, value)
             .getStatusCode();
 }
 ```
@@ -194,6 +194,3 @@ Another source of pain is that if we ever make a mistake and block in one of our
 It's nice to be able to control all the moving parts in our asynchronous processing: every layer has a thread pool size and a queue. We can make some of those layers elastic, and try and adjust them according to how much work they do. But at some point it becomes a burden, and we start looking for something simpler, or leaner. Analysis of scalability leads to the conclusion that it is often better to shed the extra threads, and work with the constraints imposed by the physical hardware. This is an example of "mechanical sympathy", as is famously exploited by LMAX to great effect in the https://lmax-exchange.github.io/disruptor/[Disruptor Pattern].
 
 We have begun to see the power of the Reactive approach, but remember that with power comes responsibility. It's radical, and it's fundamental. It's "rip it up and start again" territory. So you will also hopefully appreciate that Reactive isn't a solution to all problems. In fact it isn't a solution to any problem, it merely facilitates the solution of a certain class of problems. The benefits you get from using it might be outweighed by the costs of learning it, modifying your APIs to be Reactive all the way down, and maintaining the code afterwards, so tread carefully.
-
-
-
