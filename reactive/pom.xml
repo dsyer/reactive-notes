@@ -14,17 +14,16 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.4.0.BUILD-SNAPSHOT</version>
+		<version>1.4.0.RELEASE</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.8</java.version>
-		<reactor.version>3.0.0.BUILD-SNAPSHOT</reactor.version>
-		<reactor-io.version>0.5.0.BUILD-SNAPSHOT</reactor-io.version>
+		<reactor.version>3.0.0.RC2</reactor.version>
 		<jetty.version>9.3.9.v20160517</jetty.version>
-		<spring.version>5.0.0.BUILD-SNAPSHOT</spring.version>
+		<spring.version>5.0.0.M1</spring.version>
 	</properties>
 
 	<dependencies>
@@ -35,7 +34,6 @@
 		<dependency>
 			<groupId>io.projectreactor.ipc</groupId>
 			<artifactId>reactor-netty</artifactId>
-			<version>${reactor-io.version}</version>
 		</dependency>
 
 		<dependency>
@@ -44,6 +42,18 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.boot.experimental</groupId>
+				<artifactId>spring-boot-dependencies-web-reactive</artifactId>
+				<version>0.1.0.M1</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<profiles>
 		<profile>
@@ -56,7 +66,6 @@
 					<!-- github: bclozel/spring-boot-reactive-web -->
 					<groupId>org.springframework.boot.experimental</groupId>
 					<artifactId>spring-boot-starter-web-reactive</artifactId>
-					<version>0.1.0.BUILD-SNAPSHOT</version>
 				</dependency>
 			</dependencies>
 		</profile>
@@ -70,7 +79,6 @@
 					<!-- github: bclozel/spring-boot-reactive-web -->
 					<groupId>org.springframework.boot.experimental</groupId>
 					<artifactId>spring-boot-starter-web-reactive</artifactId>
-					<version>0.1.0.BUILD-SNAPSHOT</version>
 				</dependency>
 			</dependencies>
 		</profile>
@@ -81,7 +89,6 @@
 					<!-- github: bclozel/spring-boot-reactive-web -->
 					<groupId>org.springframework.boot.experimental</groupId>
 					<artifactId>spring-boot-starter-web-reactive</artifactId>
-					<version>0.1.0.BUILD-SNAPSHOT</version>
 					<exclusions>
 						<exclusion>
 							<groupId>org.springframework.boot</groupId>
@@ -98,7 +105,6 @@
 					<!-- github: bclozel/spring-boot-reactive-web -->
 					<groupId>org.springframework.boot.experimental</groupId>
 					<artifactId>spring-boot-starter-web-reactive</artifactId>
-					<version>0.1.0.BUILD-SNAPSHOT</version>
 					<exclusions>
 						<exclusion>
 							<groupId>org.springframework.boot</groupId>

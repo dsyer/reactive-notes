@@ -99,29 +99,41 @@ NOTE: Spring Reactive started as a standalone project, but is folded into the Sp
 The first step to fully Reactive in our scatter-gather example would be to replace `spring-boot-starter-web` with `spring-boot-starter-web-reactive` on the classpath. In Maven:
 
 ```xml
-<dependency>
+<dependencies>
+  <dependency>
 	<groupId>org.springframework.boot.experimental</groupId>
 	<artifactId>spring-boot-starter-web-reactive</artifactId>
-	<version>0.1.0-SNAPSHOT</version>
-</dependency>
+  </dependency>
+  ...
+</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.boot.experimental</groupId>
+				<artifactId>spring-boot-dependencies-web-reactive</artifactId>
+				<version>0.1.0.M1</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 ```
 
 or in Gradle:
 
 ```groovy
-repositories {
-    ...
-    mavenLocal()
-}
-
-
 dependencies {
-	compile('org.springframework.boot.experimental:spring-boot-starter-web-reactive:0.1.0-SNAPSHOT')
+	compile('org.springframework.boot.experimental:spring-boot-starter-web-reactive')
     ...
+}
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.boot.experimental:spring-boot-dependencies-web-reactive:0.1.0.M1"
+	}
 }
 ```
 
-(At the time of writing there are snapshots of this experimental library in repo.spring.io, or you could build and install locally from https://github.com/bclozel/spring-boot-reactive-web[GitHub].)
+(At the time of writing there are snapshots and milestones of this experimental library in repo.spring.io, or you could build and install locally from https://github.com/bclozel/spring-boot-reactive-web[GitHub].)
 
 Then in the controller, we can simply lose the bridge to `CompletableFuture` and return an object of type `Mono`:
 
