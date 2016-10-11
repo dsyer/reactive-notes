@@ -41,4 +41,9 @@ public class DemoApplicationTests {
         assertThat(application.netty().block().getCounts()).isNotNull();
     }
 
+    @Test
+    public void serialEndpoint() {
+        assertThat(application.serial().block().getCounts()).isNotNull();
+    }
+
 }

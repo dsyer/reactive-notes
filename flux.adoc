@@ -15,14 +15,14 @@ To get started grab a blank project from https://start.spring.io and add the Rea
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-core</artifactId>
-			<version>3.0.0.RC2</version>
+			<version>3.0.2.RELEASE</version>
 		</dependency>
 ```
 
 With Gradle it's very similar:
 
 ```java
-    compile 'io.projectreactor:reactor-core:3.0.0.RC2'
+    compile 'io.projectreactor:reactor-core:3.0.2.RELEASE'
 ```
 
 Now let's write some code.
@@ -194,7 +194,7 @@ In fact the batching subscriber is such a common use case that there are conveni
 Flux.just("red", "white", "blue")
   .log()
   .map(String::toUpperCase)
-.subscribe(null, 2);
+.subscribe(2);
 ```
 
 (note the call to `subscribe()` with a request limit). Here's the output:
@@ -222,7 +222,7 @@ Flux.just("red", "white", "blue")
   .log()
   .map(String::toUpperCase)
   .subscribeOn(Schedulers.parallel())
-.subscribe(null, 2);
+.subscribe(2);
 ```
 
 the result can be seen in the output:
@@ -304,7 +304,7 @@ The output looks like this:
 
 Notice that the consumer callbacks (logging "Consumed: ...") are on the publisher thread `pub-1-1`. If you take out the `subscribeOn()` call, you might see all of the 2nd chunk of data processed on the `pub-1-1` thread as well. This, again, is Reactor being frugal with threads -- if there's no explicit request to switch threads it stays on the same one for the next call, whatever that is.
 
-NOTE: We changed the code in this sample from `subscribe(null, 2)` to adding a `prefetch=2` to the `publishOn()`. In this case the fetch size hint in `subscribe()` would have been ignored.
+NOTE: We changed the code in this sample from `subscribe(2)` to adding a `prefetch=2` to the `publishOn()`. In this case the fetch size hint in `subscribe()` would have been ignored.
 
 === Extractors: The Subscribers from the Dark Side
 
