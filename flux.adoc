@@ -68,7 +68,7 @@ What's interesting about this little sample -- mind blowing, even, if you're not
 The same declarative, functional approach to processing a sequence of data exists in all Reactive libraries, and also in Java 8 `Streams`. Consider this, similar looking code, using a `Stream` with the same contents as the `Flux`:
 
 ```java
-Stream<String> stream = Streams.of("red", "white", "blue");
+Stream<String> stream = Stream.of("red", "white", "blue");
 Stream<String> upper = stream.map(value -> {
     System.out.println(value);
     return value.toUpperCase();
